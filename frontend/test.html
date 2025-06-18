@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тестирование API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Тестирование API</h1>
+    
+    <div class="test-section">
+        <h2>Проверка статуса мероприятия</h2>
+        <input type="number" id="eventId" placeholder="ID мероприятия" value="1">
+        <button onclick="checkEventStatus()">Проверить статус</button>
+        <div id="statusResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Одобрение мероприятия</h2>
+        <button onclick="approveEvent()">Одобрить мероприятие</button>
+        <div id="approveResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Проверка участников</h2>
+        <button onclick="checkParticipants()">Проверить участников</button>
+        <div id="participantsResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Участие в мероприятии</h2>
+        <button onclick="participateInEvent()">Участвовать в мероприятии</button>
+        <div id="participateResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        const token = localStorage.getItem('token');
+        
+        function getHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+        
+        async function checkEventStatus() {
+            const eventId = document.getElementById('eventId').value;
+            const resultDiv = document.getElementById('statusResult');
+            
+            try {
+                const response = await fetch(`${API_BASE}/events/${eventId}/status`);
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = `Ошибка: ${error.message}`;
+            }
+        }
+        
+        async function approveEvent() {
+            const eventId = document.getElementById('eventId').value;
+            const resultDiv = document.getElementById('approveResult');
+            
+            try {
+                const response = await fetch(`${API_BASE}/events/${eventId}/approve-test`, {
+                    method: 'POST',
+                    headers: getHeaders()
+                });
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = `Ошибка: ${error.message}`;
+            }
+        }
+        
+        async function checkParticipants() {
+            const eventId = document.getElementById('eventId').value;
+            const resultDiv = document.getElementById('participantsResult');
+            
+            try {
+                const response = await fetch(`${API_BASE}/events/${eventId}/participants`);
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = `Ошибка: ${error.message}`;
+            }
+        }
+        
+        async function participateInEvent() {
+            const eventId = document.getElementById('eventId').value;
+            const resultDiv = document.getElementById('participateResult');
+            
+            try {
+                const response = await fetch(`${API_BASE}/events/${eventId}/participate`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        event_id: parseInt(eventId),
+                        ticket_purchased: false
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    resultDiv.textContent = `Ошибка ${response.status}: ${JSON.stringify(errorData, null, 2)}`;
+                } else {
+                    const data = await response.json();
+                    resultDiv.textContent = `Успех: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.textContent = `Ошибка: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,1077 @@
+// Получаем элементы страницы
+const eventsContainer = document.getElementById('eventsContainer');
+const searchInput = document.getElementById('searchInput');
+const typeFilter = document.getElementById('typeFilter');
+const createEventBtn = document.getElementById('createEventBtn');
+
+// Функция для получения текущего пользователя
+function getCurrentUser() {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+}
+
+// Функция для проверки авторизации
+function isAuthenticated() {
+    return localStorage.getItem('token') !== null;
+}
+
+// Функция для перенаправления на страницу входа
+function redirectToLogin() {
+    window.location.href = './index.html';
+}
+
+// Функция для удаления токена
+function removeToken() {
+    localStorage.removeItem('token');
+}
+
+// Функция для удаления данных пользователя
+function removeUser() {
+    localStorage.removeItem('user');
+}
+
+// Получаем элементы
+const createEventModal = document.getElementById('createEventModal');
+const createEventForm = document.getElementById('createEventForm');
+
+// Функция загрузки категорий
+async function loadCategories() {
+    console.log('Loading categories...');
+    try {
+        const url = 'http://localhost:8000/categories';
+        console.log('Fetching categories from:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'include'  // Включаем credentials для CORS
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const categories = await response.json();
+        console.log('Loaded categories:', categories);
+
+        // Обновляем фильтр категорий
+        const categoryFilter = document.getElementById('typeFilter');
+        console.log('Category filter element:', categoryFilter);
+        
+        if (categoryFilter) {
+            const options = categories.map(category => {
+                const displayName = category.description || getCategoryDisplay(category);
+                return `<option value="${category.name}">${displayName}</option>`;
+            });
+            console.log('Generated options:', options);
+            
+            categoryFilter.innerHTML = '<option value="">Все категории</option>' + options.join('');
+            console.log('Updated filter HTML:', categoryFilter.innerHTML);
+        } else {
+            console.error('Category filter element not found!');
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+        // Не показываем alert, так как это может быть не критично для работы страницы
+    }
+}
+
+// Открытие модального окна создания мероприятия
+if (createEventBtn) {
+    createEventBtn.onclick = async () => {
+        if (!isAuthenticated()) {
+            alert('Пожалуйста, войдите в систему для создания мероприятия');
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) {
+                loginModal.style.display = 'block';
+            }
+            return;
+        }
+
+        try {
+            const user = await getCurrentUser();
+            if (user.role !== 'organizer' && user.role !== 'admin') {
+                alert('Только организаторы и администраторы могут создавать мероприятия');
+                return;
+            }
+
+            if (createEventModal) {
+                createEventModal.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Ошибка при проверке прав доступа:', error);
+            showError('Ошибка при проверке прав доступа');
+        }
+    }
+}
+
+// Закрытие модальных окон
+const closeButtons = document.getElementsByClassName('close');
+if (closeButtons) {
+    Array.from(closeButtons).forEach(btn => {
+        btn.onclick = function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+    });
+}
+
+// Обработчик отправки формы создания мероприятия
+document.getElementById('createEventForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    console.log('Form submission started');
+
+    try {
+        const isPaid = document.getElementById('isPaidEvent').checked;
+        const price = isPaid ? parseFloat(document.getElementById('eventPrice').value) : 0;
+        
+        if (isPaid && (!price || price <= 0)) {
+            throw new Error('Для платного мероприятия необходимо указать стоимость');
+        }
+
+        // Получаем тип мероприятия
+        const eventType = document.getElementById('eventType').value;
+        if (!eventType) {
+            throw new Error('Необходимо выбрать тип мероприятия');
+        }
+
+        const eventData = {
+            title: document.getElementById('eventTitle').value,
+            short_description: document.getElementById('eventShortDescription').value,
+            full_description: document.getElementById('eventFullDescription').value,
+            location: document.getElementById('eventLocation').value,
+            start_date: document.getElementById('eventStartDate').value,
+            end_date: document.getElementById('eventEndDate').value,
+            max_participants: parseInt(document.getElementById('eventMaxParticipants').value),
+            event_type: isPaid ? 'paid' : 'free',  // Тип оплаты (FREE/PAID)
+            ticket_price: price,
+            status: 'PENDING'
+        };
+
+        // Находим ID категории по типу мероприятия
+        let category_ids = [];
+        
+        // Получаем все категории для поиска ID по названию
+        const categoriesResponse = await fetch('http://localhost:8000/categories', {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (categoriesResponse.ok) {
+            const categories = await categoriesResponse.json();
+            const eventTypeCategory = categories.find(cat => cat.name === eventType);
+            
+            if (eventTypeCategory) {
+                category_ids = [eventTypeCategory.id];
+                console.log(`Found category ID for ${eventType}: ${eventTypeCategory.id}`);
+            } else {
+                console.warn(`Category not found for event type: ${eventType}`);
+            }
+        }
+
+        const eventPayload = {
+            ...eventData,
+            category_ids
+        };
+
+        console.log('Submitting event data:', eventPayload);
+        const createdEvent = await createEvent(eventPayload);
+        console.log('Event created:', createdEvent);
+
+        // Закрываем модальное окно
+        const modal = document.getElementById('createEventModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+
+        // Показываем сообщение об успехе
+        showSuccess('Мероприятие успешно создано и отправлено на модерацию');
+        
+        // Обновляем список мероприятий
+        await loadEvents();
+
+    } catch (error) {
+        console.error('Error in form submission:', error);
+        showError(error.message);
+    }
+});
+
+// Функция фильтрации мероприятий
+function filterEvents() {
+    // Проверяем существование элементов
+    if (!searchInput || !typeFilter) {
+        console.warn('Элементы фильтрации не найдены');
+        return;
+    }
+    
+    const searchTerm = searchInput.value.toLowerCase();
+    const selectedType = typeFilter.value;
+    const eventCards = document.querySelectorAll('.event-card');
+
+    eventCards.forEach(card => {
+        const title = card.querySelector('h3').textContent.toLowerCase();
+        const description = card.querySelector('.event-description').textContent.toLowerCase();
+        const eventCategories = card.dataset.categories ? JSON.parse(card.dataset.categories) : [];
+
+        const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
+        
+        // Для фильтрации по категории сравниваем с кодами категорий
+        let matchesType = true;
+        if (selectedType) {
+            // Сравниваем с кодом категории (например, "CONFERENCE", "SEMINAR")
+            matchesType = eventCategories.includes(selectedType);
+        }
+
+        card.style.display = matchesSearch && matchesType ? 'block' : 'none';
+    });
+}
+
+// Обработчики событий для фильтрации
+if (searchInput) {
+    searchInput.addEventListener('input', filterEvents);
+} else {
+    console.warn('Элемент поиска не найден');
+}
+
+if (typeFilter) {
+    typeFilter.addEventListener('change', filterEvents);
+} else {
+    console.warn('Элемент фильтра категорий не найден');
+}
+
+// Функция для форматирования даты
+function formatDate(dateString) {
+    const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    return new Date(dateString).toLocaleDateString('ru-RU', options);
+}
+
+// Функция для получения заголовков с токеном авторизации
+function getAuthHeaders() {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+    };
+}
+
+// Функция для отображения ошибок
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    }
+}
+
+// Функция для отображения успешных сообщений
+function showSuccess(message) {
+    const successDiv = document.getElementById('success-message');
+    if (successDiv) {
+        successDiv.textContent = message;
+        successDiv.style.display = 'block';
+        setTimeout(() => {
+            successDiv.style.display = 'none';
+        }, 5000);
+    }
+}
+
+// Функция для загрузки списка мероприятий
+async function loadEvents() {
+    try {
+        console.log('Loading events...');
+        const response = await fetch('http://localhost:8000/events', {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'include'
+        });
+
+        console.log('Events response status:', response.status);
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                removeToken();
+                removeUser();
+                showError('Пожалуйста, войдите в систему для просмотра мероприятий');
+                return;
+            }
+            throw new Error('Failed to load events');
+        }
+
+        const events = await response.json();
+        console.log('Loaded events:', events);
+        
+        // Отладочная информация для категорий
+        events.forEach((event, index) => {
+            console.log(`Event ${index + 1} (${event.title}):`, {
+                categories: event.categories,
+                categoriesLength: event.categories ? event.categories.length : 0,
+                hasCategories: !!event.categories
+            });
+        });
+        
+        // Фильтруем только одобренные мероприятия
+        const approvedEvents = events.filter(event => event.status === 'approved');
+        console.log('Approved events:', approvedEvents);
+        
+        displayEvents(approvedEvents);
+
+        // Показываем кнопку создания мероприятия только для организаторов и администраторов
+        if (createEventBtn) {
+            try {
+                const user = await getCurrentUser();
+                const canCreateEvents = user && (user.role === 'organizer' || user.role === 'admin');
+                createEventBtn.style.display = canCreateEvents ? 'block' : 'none';
+            } catch (error) {
+                console.error('Ошибка при проверке прав доступа:', error);
+                createEventBtn.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading events:', error);
+        showError('Ошибка при загрузке мероприятий');
+    }
+}
+
+// Функция для отображения списка мероприятий
+function displayEvents(events) {
+    const container = document.getElementById('eventsContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    events.forEach(event => {
+        console.log(`Processing event: ${event.title}`, {
+            eventCategories: event.categories,
+            categoriesType: typeof event.categories,
+            categoriesLength: event.categories ? event.categories.length : 'undefined'
+        });
+        
+        // Проверяем, что categories — это массив
+        let categoryNames = 'Без категории';
+        let categoryTags = '';
+        if (Array.isArray(event.categories) && event.categories.length > 0) {
+            categoryNames = event.categories
+                .map(cat => getCategoryDisplay(cat))
+                .join(', ');
+            
+            // Создаем теги категорий
+            categoryTags = event.categories
+                .map(cat => `<span class="category-tag">${getCategoryDisplay(cat)}</span>`)
+                .join('');
+        }
+
+        const eventCard = document.createElement('div');
+        eventCard.className = 'event-card';
+        eventCard.dataset.type = event.event_type;
+        
+        // Сохраняем категории для фильтрации (используем коды для фильтрации)
+        const categories = Array.isArray(event.categories) ? event.categories.map(cat => cat.name) : [];
+        eventCard.dataset.categories = JSON.stringify(categories);
+        
+        const startDate = new Date(event.start_date);
+        const formattedDate = startDate.toLocaleString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        // Определяем тип оплаты
+        const paymentType = event.ticket_price && event.ticket_price > 0 ? 'PAID' : 'FREE';
+        const paymentTypeDisplay = getPaymentTypeDisplay(paymentType);
+        const paymentClass = paymentType === 'PAID' ? 'payment-paid' : 'payment-free';
+
+        // Определяем статус мероприятия
+        const statusClass = `status-${event.status.toLowerCase()}`;
+        const statusDisplay = {
+            'PENDING': 'На модерации',
+            'APPROVED': 'Одобрено',
+            'REJECTED': 'Отклонено',
+            'PUBLISHED': 'Опубликовано'
+        }[event.status] || event.status;
+
+        // Определяем статус участия пользователя
+        const currentUser = getCurrentUser();
+        const isParticipating = event.participants && event.participants.some(p => p.user_id === currentUser.id);
+        const isOrganizer = event.organizer_id === currentUser.id;
+        
+        let participationStatus = '';
+        if (isOrganizer) {
+            participationStatus = '<span class="participation-badge organizer"><i class="fas fa-crown"></i> Организатор</span>';
+        } else if (isParticipating) {
+            participationStatus = '<span class="participation-badge participant"><i class="fas fa-check-circle"></i> Участвую</span>';
+        }
+
+        eventCard.innerHTML = `
+            <div class="event-image">
+                <img src="${event.image_url || '/frontend/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/frontend/images/notification-icon.svg'">
+            </div>
+            <div class="event-content">
+                <h3>${event.title}</h3>
+                <p class="event-date">
+                    <i class="fas fa-calendar"></i>
+                    ${formattedDate}
+                </p>
+                <p class="event-description">${event.short_description || event.description}</p>
+                ${categoryTags ? `<div class="categories-list">${categoryTags}</div>` : ''}
+                ${participationStatus ? `<div class="participation-status">${participationStatus}</div>` : ''}
+                <div class="event-footer">
+                    <div class="event-meta">
+                        <span class="event-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${event.location}
+                        </span>
+                        <span class="event-participants">
+                            <i class="fas fa-users"></i>
+                            ${event.current_participants || 0}/${event.max_participants}
+                        </span>
+                        <span class="event-payment ${paymentClass}">
+                            <i class="fas ${paymentType === 'PAID' ? 'fa-ticket-alt' : 'fa-gift'}"></i>
+                            ${paymentTypeDisplay}
+                            ${paymentType === 'PAID' && event.ticket_price ? ` (${event.ticket_price} ₽)` : ''}
+                        </span>
+                    </div>
+                    <div class="event-status ${statusClass}">${statusDisplay}</div>
+                </div>
+                <div class="event-actions">
+                    <button class="btn btn-primary" onclick="viewEvent(${event.id})">
+                        <i class="fas fa-eye"></i> Подробнее
+                    </button>
+                    ${event.status === 'APPROVED' && !isParticipating && !isOrganizer ? `
+                        <button class="btn btn-secondary" onclick="registerForEvent(${event.id})">
+                            <i class="fas fa-user-plus"></i> Зарегистрироваться
+                        </button>
+                    ` : ''}
+                    ${event.status === 'APPROVED' && isParticipating && !isOrganizer ? `
+                        <button class="btn btn-warning btn-small" onclick="cancelEventParticipation(${event.id})">
+                            <i class="fas fa-user-minus"></i> Отменить участие
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(eventCard);
+    });
+}
+
+// Функция для получения отображаемого названия типа мероприятия
+function getEventTypeDisplay(type) {
+    const types = {
+        'CONFERENCE': 'Конференция',
+        'SEMINAR': 'Семинар',
+        'WORKSHOP': 'Мастер-класс',
+        'EXHIBITION': 'Выставка',
+        'CONCERT': 'Концерт',
+        'FESTIVAL': 'Фестиваль',
+        'SPORTS': 'Спортивное мероприятие',
+        'OTHER': 'Другое'
+    };
+    return types[type] || type;
+}
+
+// Функция для получения отображаемого названия категории
+function getCategoryDisplay(category) {
+    // Если категория уже содержит русское название в description, используем его
+    if (category.description && category.description !== category.name) {
+        return category.description;
+    }
+    
+    // Иначе переводим по коду
+    const categoryTranslations = {
+        'CONFERENCE': 'Конференция',
+        'SEMINAR': 'Семинар',
+        'WORKSHOP': 'Мастер-класс',
+        'EXHIBITION': 'Выставка',
+        'CONCERT': 'Концерт',
+        'FESTIVAL': 'Фестиваль',
+        'SPORTS': 'Спортивное мероприятие',
+        'OTHER': 'Другое'
+    };
+    return categoryTranslations[category.name] || category.name;
+}
+
+// Функция для получения отображаемого названия типа оплаты
+function getPaymentTypeDisplay(paymentType) {
+    const paymentTypes = {
+        'FREE': 'Бесплатно',
+        'PAID': 'Платно'
+    };
+    return paymentTypes[paymentType] || paymentType;
+}
+
+// Функция для просмотра деталей мероприятия
+function viewEvent(eventId) {
+    window.location.href = `event.html?id=${eventId}`;
+}
+
+// Функция для отображения модального окна с деталями мероприятия
+function showEventModal(event) {
+    const modal = document.getElementById('eventModal');
+    if (!modal) return;
+
+    const title = document.getElementById('modalEventTitle');
+    const details = document.getElementById('modalEventDetails');
+
+    if (title) title.textContent = event.title;
+    if (details) {
+        // Получаем русские названия категорий
+        const categoryNames = event.categories && event.categories.length > 0 
+            ? event.categories.map(cat => getCategoryDisplay(cat)).join(', ')
+            : 'Без категории';
+            
+        // Определяем тип оплаты
+        const paymentType = event.ticket_price && event.ticket_price > 0 ? 'PAID' : 'FREE';
+        const paymentTypeDisplay = getPaymentTypeDisplay(paymentType);
+            
+        details.innerHTML = `
+            <p><strong>Описание:</strong> ${event.full_description || event.short_description}</p>
+            <p><strong>Место:</strong> ${event.location}</p>
+            <p><strong>Дата начала:</strong> ${formatDate(event.start_date)}</p>
+            <p><strong>Дата окончания:</strong> ${formatDate(event.end_date)}</p>
+            <p><strong>Максимальное количество участников:</strong> ${event.max_participants}</p>
+            <p><strong>Текущее количество участников:</strong> ${event.current_participants || 0}</p>
+            <p><strong>Тип мероприятия:</strong> ${getEventTypeDisplay(event.event_type)}</p>
+            <p><strong>Тип оплаты:</strong> ${paymentTypeDisplay}</p>
+            <p><strong>Категории:</strong> ${categoryNames}</p>
+            ${event.ticket_price ? `<p><strong>Стоимость билета:</strong> ${event.ticket_price} ₽</p>` : ''}
+        `;
+    }
+
+    modal.style.display = 'block';
+}
+
+// Функция для регистрации на мероприятие
+async function registerForEvent(eventId) {
+    try {
+        // Проверяем авторизацию
+        if (!isAuthenticated()) {
+            redirectToLogin();
+            return;
+        }
+
+        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.PARTICIPATE, { id: eventId }), {
+            method: 'POST',
+            headers: {
+                ...getAuthHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                event_id: eventId,
+                ticket_purchased: false
+            })
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                removeToken();
+                removeUser();
+                redirectToLogin();
+                return;
+            }
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to register for event');
+        }
+
+        showSuccess('Вы успешно зарегистрировались на мероприятие');
+        loadEvents(); // Перезагружаем список мероприятий
+    } catch (error) {
+        console.error('Error registering for event:', error);
+        showError(error.message || 'Ошибка при регистрации на мероприятие');
+    }
+}
+
+// Функция для отмены участия в мероприятии
+async function cancelEventParticipation(eventId) {
+    try {
+        // Проверяем авторизацию
+        if (!isAuthenticated()) {
+            redirectToLogin();
+            return;
+        }
+
+        // Запрашиваем подтверждение
+        if (!confirm('Вы уверены, что хотите отменить участие в этом мероприятии?')) {
+            return;
+        }
+
+        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.CANCEL_PARTICIPATION, { id: eventId }), {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                removeToken();
+                removeUser();
+                redirectToLogin();
+                return;
+            }
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to cancel participation');
+        }
+
+        showSuccess('Участие в мероприятии отменено');
+        loadEvents(); // Перезагружаем список мероприятий
+    } catch (error) {
+        console.error('Error cancelling participation:', error);
+        showError(error.message || 'Ошибка при отмене участия');
+    }
+}
+
+// Функция для показа модального окна входа
+function showLoginModal() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) {
+        loginModal.style.display = 'block';
+    }
+}
+
+// Функция для настройки поиска
+function setupSearch() {
+    const searchInput = document.getElementById('searchInput');
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const eventCards = document.querySelectorAll('.event-card');
+        
+        eventCards.forEach(card => {
+            const title = card.querySelector('h3').textContent.toLowerCase();
+            const description = card.querySelector('.event-description').textContent.toLowerCase();
+            const location = card.querySelector('.event-location').textContent.toLowerCase();
+            
+            if (title.includes(searchTerm) || 
+                description.includes(searchTerm) || 
+                location.includes(searchTerm)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+}
+
+// Функция для фильтрации мероприятий
+function setupFilters() {
+    const filterButtons = document.querySelectorAll('.filter-buttons .btn');
+    if (!filterButtons.length) return;
+
+    filterButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            const filter = button.dataset.filter;
+            
+            // Обновляем активную кнопку
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            try {
+                showLoading();
+                const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.LIST) + `?filter=${filter}`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (!response.ok) {
+                    throw new Error('Ошибка фильтрации');
+                }
+
+                const events = await response.json();
+                displayEvents(events);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                hideLoading();
+            }
+        });
+    });
+}
+
+// Вспомогательная функция для debounce
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Вспомогательные функции
+function showLoading(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.classList.add('loading');
+    }
+}
+
+function hideLoading(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.classList.remove('loading');
+    }
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация обработчика для платного мероприятия
+    const isPaidCheckbox = document.getElementById('isPaidEvent');
+    if (isPaidCheckbox) {
+        isPaidCheckbox.addEventListener('change', handlePaidEventChange);
+    }
+
+    // Остальная инициализация...
+    loadEvents();
+    setupSearch();
+    setupFilters();
+});
+
+function handlePaidEventChange() {
+    const priceGroup = document.getElementById('priceGroup');
+    const priceInput = document.getElementById('eventPrice');
+    
+    if (priceGroup && priceInput) {
+        if (this.checked) {
+            priceGroup.style.display = 'block';
+            priceInput.required = true;
+        } else {
+            priceGroup.style.display = 'none';
+            priceInput.required = false;
+            priceInput.value = '';
+        }
+    }
+}
+
+function showCreateEventModal() {
+    const modal = document.getElementById('createEventModal');
+    if (!modal) return;
+
+    // Очищаем форму
+    const form = modal.querySelector('form');
+    if (form) {
+        form.reset();
+        // Скрываем поле стоимости при загрузке формы
+        const priceGroup = document.getElementById('priceGroup');
+        const priceInput = document.getElementById('eventPrice');
+        if (priceGroup && priceInput) {
+            priceGroup.style.display = 'none';
+            priceInput.required = false;
+        }
+        // Скрываем поле пользовательского типа
+        const customTypeGroup = document.getElementById('customTypeGroup');
+        if (customTypeGroup) {
+            customTypeGroup.style.display = 'none';
+        }
+    }
+
+    // Показываем модальное окно
+    modal.style.display = 'block';
+}
+
+// Функция для проверки доступных методов
+async function checkAllowedMethods() {
+    try {
+        const url = getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.CREATE);
+        console.log('Checking allowed methods for URL:', url);
+        
+        const response = await fetch(url, {
+            method: 'OPTIONS',
+            headers: getAuthHeaders()
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+        
+        const allowedMethods = response.headers.get('Allow');
+        console.log('Allowed methods:', allowedMethods);
+        
+        return allowedMethods;
+    } catch (error) {
+        console.error('Error checking allowed methods:', error);
+        return null;
+    }
+}
+
+// Функция для создания нового мероприятия
+async function createEvent(eventData) {
+    try {
+        // Устанавливаем статус PENDING для модерации
+        eventData.status = 'pending';
+        
+        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.CREATE), {
+            method: 'POST',
+            headers: {
+                ...getAuthHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(eventData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Ошибка при создании мероприятия');
+        }
+
+        const event = await response.json();
+        showSuccess('Мероприятие создано и отправлено на модерацию');
+        return event;
+    } catch (error) {
+        console.error('Ошибка при создании мероприятия:', error);
+        showError(error.message);
+        throw error;
+    }
+}
+
+// Функция валидации данных мероприятия
+function validateEventData(data) {
+    const errors = [];
+
+    // Проверка обязательных полей
+    if (!data.title?.trim()) {
+        errors.push('Название мероприятия обязательно');
+    } else if (data.title.length < 3) {
+        errors.push('Название должно содержать минимум 3 символа');
+    } else if (data.title.length > 100) {
+        errors.push('Название не должно превышать 100 символов');
+    }
+
+    if (!data.short_description?.trim()) {
+        errors.push('Краткое описание обязательно');
+    } else if (data.short_description.length < 10) {
+        errors.push('Краткое описание должно содержать минимум 10 символов');
+    } else if (data.short_description.length > 200) {
+        errors.push('Краткое описание не должно превышать 200 символов');
+    }
+
+    if (!data.full_description?.trim()) {
+        errors.push('Полное описание обязательно');
+    } else if (data.full_description.length < 50) {
+        errors.push('Полное описание должно содержать минимум 50 символов');
+    }
+
+    if (!data.location?.trim()) {
+        errors.push('Место проведения обязательно');
+    }
+
+    if (!data.start_date) {
+        errors.push('Дата начала обязательна');
+    }
+
+    if (!data.end_date) {
+        errors.push('Дата окончания обязательна');
+    }
+
+    if (!data.max_participants) {
+        errors.push('Максимальное количество участников обязательно');
+    }
+
+    if (!data.event_type) {
+        errors.push('Тип мероприятия обязателен');
+    }
+
+    return errors;
+}
+
+// Функция обработки ошибок API
+function handleApiError(error) {
+    let errorMessage = 'Произошла ошибка при создании мероприятия';
+    
+    if (error.message) {
+        errorMessage = error.message;
+    }
+
+    // Показываем ошибку в модальном окне
+    const errorDiv = document.getElementById('createEventError');
+    if (errorDiv) {
+        errorDiv.textContent = errorMessage;
+        errorDiv.style.display = 'block';
+        
+        // Скрываем ошибку через 5 секунд
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 5000);
+    } else {
+        // Если элемент для ошибки не найден, показываем alert
+        alert(errorMessage);
+    }
+} 
+
+// Функция для форматирования даты в формат YYYY-MM-DDThh:mm
+function formatDateTimeForInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// Функция для валидации формата даты
+function validateDateTimeFormat(input) {
+    const value = input.value;
+    const pattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+    
+    if (!pattern.test(value)) {
+        input.setCustomValidity('Неверный формат даты и времени');
+        return false;
+    }
+    
+    const [datePart, timePart] = value.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+    
+    // Проверка корректности даты
+    const date = new Date(year, month - 1, day, hours, minutes);
+    if (date.getFullYear() !== year || 
+        date.getMonth() !== month - 1 || 
+        date.getDate() !== day ||
+        date.getHours() !== hours ||
+        date.getMinutes() !== minutes) {
+        input.setCustomValidity('Некорректная дата или время');
+        return false;
+    }
+    
+    input.setCustomValidity('');
+    return true;
+}
+
+// Функция для установки минимальной даты (текущая дата)
+function setMinDateTime() {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    
+    if (!startDateInput || !endDateInput) return;
+    
+    // Получаем текущую дату и время
+    const now = new Date();
+    const formattedDate = now.toISOString().slice(0, 16); // Формат: YYYY-MM-DDTHH:mm
+    
+    // Устанавливаем минимальную дату и время
+    startDateInput.min = formattedDate;
+    endDateInput.min = formattedDate;
+    
+    // Обновляем минимальную дату окончания при изменении даты начала
+    startDateInput.addEventListener('change', () => {
+        endDateInput.min = startDateInput.value;
+    });
+}
+
+// Функция для валидации дат
+function validateDates() {
+    const startDateInput = document.getElementById('eventStartDate');
+    const endDateInput = document.getElementById('eventEndDate');
+    
+    if (!startDateInput || !endDateInput) return;
+    
+    // Проверяем формат обеих дат
+    const startValid = validateDateTimeFormat(startDateInput);
+    const endValid = validateDateTimeFormat(endDateInput);
+    
+    if (!startValid || !endValid) return;
+    
+    const startDate = new Date(startDateInput.value);
+    const endDate = new Date(endDateInput.value);
+    
+    if (endDate <= startDate) {
+        endDateInput.setCustomValidity('Дата окончания должна быть позже даты начала');
+    } else {
+        endDateInput.setCustomValidity('');
+    }
+}
+
+// Добавляем обработчики событий при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('eventStartDate');
+    const endDateInput = document.getElementById('eventEndDate');
+    
+    if (startDateInput && endDateInput) {
+        setMinDateTime();
+        
+        // Добавляем обработчики для валидации при вводе
+        startDateInput.addEventListener('input', function() {
+            validateDateTimeFormat(this);
+            validateDates();
+        });
+        
+        endDateInput.addEventListener('input', function() {
+            validateDateTimeFormat(this);
+            validateDates();
+        });
+        
+        // Обработчики изменения даты
+        startDateInput.addEventListener('change', function() {
+            if (validateDateTimeFormat(this)) {
+                endDateInput.min = this.value;
+                validateDates();
+            }
+        });
+        
+        endDateInput.addEventListener('change', validateDates);
+    }
+});
+
+// Функция для проверки и отображения кнопки создания мероприятия
+async function checkAndShowCreateButton() {
+    try {
+        console.log('Проверка прав доступа для кнопки создания мероприятия');
+        const user = await getCurrentUser();
+        console.log('Полученные данные пользователя:', user);
+        
+        if (user) {
+            console.log('Роль пользователя:', user.role);
+            if (user.role === 'organizer' || user.role === 'admin') {
+                console.log('Показываем кнопку создания мероприятия');
+                createEventBtn.style.display = 'block';
+            } else {
+                console.log('Скрываем кнопку создания мероприятия - недостаточно прав');
+                createEventBtn.style.display = 'none';
+            }
+        } else {
+            console.log('Пользователь не авторизован');
+            createEventBtn.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Ошибка при проверке прав доступа:', error);
+        createEventBtn.style.display = 'none';
+    }
+}
+
+// Вызываем функцию при загрузке страницы и после авторизации
+document.addEventListener('DOMContentLoaded', checkAndShowCreateButton);
+window.addEventListener('authStateChanged', checkAndShowCreateButton);
+
+// Инициализация загрузки мероприятий при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    loadEvents();
+    loadCategories();
+});
+
+// Обновляем список мероприятий при изменении состояния авторизации
+window.addEventListener('authStateChanged', function() {
+    loadEvents();
+}); 
