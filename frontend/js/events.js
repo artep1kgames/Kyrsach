@@ -405,7 +405,7 @@ function displayEvents(events) {
 
         eventCard.innerHTML = `
             <div class="event-image">
-                <img src="${event.image_url || '/frontend/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/frontend/images/notification-icon.svg'">
+                <img src="${event.image_url || '/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/images/notification-icon.svg'">
             </div>
             <div class="event-content">
                 <h3>${event.title}</h3>
@@ -1092,7 +1092,7 @@ function displayEvents() {
         return `
             <div class="event-card" data-event-id="${event.id}">
                 <div class="event-image">
-                    <img src="${event.image_url || '/frontend/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/frontend/images/notification-icon.svg'">
+                    <img src="${event.image_url || '/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/images/notification-icon.svg'">
                 </div>
                 <div class="event-content">
                     <h3>${event.title}</h3>

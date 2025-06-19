@@ -83,6 +83,10 @@ print("All routers registered successfully!")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
+# Монтируем изображения фронтенда для обратной совместимости
+FRONTEND_IMAGES_DIR = BASE_DIR.parent / "frontend" / "images"
+app.mount("/frontend/images", StaticFiles(directory=str(FRONTEND_IMAGES_DIR)), name="frontend_images")
+
 # Монтируем фронтенд (отдача index.html и других файлов)
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
 app.mount("", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
