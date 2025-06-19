@@ -43,7 +43,7 @@ const createEventForm = document.getElementById('createEventForm');
 async function loadCategories() {
     try {
         console.log('Loading categories...');
-        const categoriesUrl = getApiUrl('/direct-categories'); // Временно используем прямой эндпоинт
+        const categoriesUrl = getApiUrl('/categories'); // Используем правильный эндпоинт
         console.log('Fetching categories from:', categoriesUrl);
         
         const response = await fetch(categoriesUrl, {
@@ -297,7 +297,7 @@ function showSuccess(message) {
 async function loadEvents() {
     try {
         console.log('Loading events...');
-        const eventsUrl = getApiUrl('/direct-events'); // Временно используем прямой эндпоинт
+        const eventsUrl = getApiUrl('/events'); // Используем правильный эндпоинт
         console.log('Fetching events from:', eventsUrl);
         
         const response = await fetch(eventsUrl, {

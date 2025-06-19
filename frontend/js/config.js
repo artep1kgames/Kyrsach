@@ -22,6 +22,13 @@ const API_CONFIG = {
             PARTICIPATE: '/events/{id}/participate',
             CANCEL_PARTICIPATION: '/events/{id}/participate'
         },
+        CATEGORIES: {
+            BASE: '/categories',
+            DETAIL: '/categories/{id}',
+            CREATE: '/categories',
+            UPDATE: '/categories/{id}',
+            DELETE: '/categories/{id}'
+        },
         USERS: {
             BASE: '/users',
             PROFILE: '/users/me',
@@ -40,6 +47,13 @@ const API_CONFIG = {
             UPDATE: 'PUT',
             DELETE: 'DELETE',
             REGISTER: 'POST'
+        },
+        CATEGORIES: {
+            LIST: 'GET',
+            DETAIL: 'GET',
+            CREATE: 'POST',
+            UPDATE: 'PUT',
+            DELETE: 'DELETE'
         }
     }
 };

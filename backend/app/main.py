@@ -11,6 +11,7 @@ from admin import UserAdmin, EventAdmin, CategoryAdmin
 from models import models
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+from datetime import datetime
 
 app = FastAPI(title="EventHub API")
 
@@ -20,6 +21,10 @@ app.add_middleware(
     allow_origins=[
         "http://127.0.0.1:5500",
         "http://localhost:5500",
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
         "https://kyrsach-0x7m.onrender.com",
         "http://kyrsach-0x7m.onrender.com",
         "*"  # Временно разрешаем все источники для отладки
@@ -87,9 +92,17 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 FRONTEND_IMAGES_DIR = BASE_DIR.parent / "frontend" / "images"
 app.mount("/frontend/images", StaticFiles(directory=str(FRONTEND_IMAGES_DIR)), name="frontend_images")
 
-# Монтируем фронтенд (отдача index.html и других файлов)
+# Монтируем фронтенд на отдельный путь, чтобы не мешать API
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
-app.mount("", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+
+# Добавляем обработчик для корневого пути, который будет отдавать index.html
+@app.get("/")
+async def serve_frontend():
+    index_path = FRONTEND_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    return {"message": "Frontend not found"}
 
 # Настройка админ-панели
 admin = Admin(app, engine)
@@ -214,11 +227,6 @@ async def shutdown():
     except Exception as e:
         print(f"Error during shutdown: {e}")
 
-# Обработчик для корневого пути
-@app.get("/")
-async def read_root():
-    return {"message": "Welcome to EventHub API"}
-
 # Тестовый эндпоинт для проверки работы сервера
 @app.get("/test")
 async def test_endpoint():
@@ -232,8 +240,26 @@ async def test_routers():
         "endpoints": {
             "categories": "/categories",
             "events": "/events",
-            "test_api": "/test-api/hello"
+            "test_api": "/test-api/hello",
+            "direct_categories": "/direct-categories",
+            "direct_events": "/direct-events"
         }
+    }
+
+# Эндпоинт для тестирования API маршрутов
+@app.get("/api-test")
+async def api_test():
+    return {
+        "message": "API is working",
+        "available_endpoints": [
+            "/categories",
+            "/events", 
+            "/direct-categories",
+            "/direct-events",
+            "/auth/token",
+            "/users/me"
+        ],
+        "timestamp": datetime.now().isoformat()
     }
 
 # Эндпоинт для просмотра всех зарегистрированных роутов
