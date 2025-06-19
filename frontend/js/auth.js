@@ -6,7 +6,7 @@ const registerBtn = document.querySelector('.register-btn');
 const closeBtns = document.getElementsByClassName('close');
 
 // Константы
-const API_URL = 'http://localhost:8000';
+const API_URL = '';
 const TOKEN_KEY = 'token';
 const USER_KEY = 'user';
 

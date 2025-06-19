@@ -38,7 +38,7 @@ const createEventForm = document.getElementById('createEventForm');
 async function loadCategories() {
     console.log('Loading categories...');
     try {
-        const url = 'http://localhost:8000/categories';
+        const url = '/categories';
         console.log('Fetching categories from:', url);
         
         const response = await fetch(url, {
@@ -160,7 +160,7 @@ document.getElementById('createEventForm').addEventListener('submit', async func
         let category_ids = [];
         
         // Получаем все категории для поиска ID по названию
-        const categoriesResponse = await fetch('http://localhost:8000/categories', {
+        const categoriesResponse = await fetch('/categories', {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -299,7 +299,7 @@ function showSuccess(message) {
 async function loadEvents() {
     try {
         console.log('Loading events...');
-        const response = await fetch('http://localhost:8000/events', {
+        const response = await fetch('/events', {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'

@@ -140,7 +140,7 @@ function getCategoryDisplay(category) {
 async function testApiConnection() {
     try {
         console.log('Тестируем подключение к API...');
-        const response = await fetch('http://localhost:8000/', {
+        const response = await fetch('/', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -152,7 +152,7 @@ async function testApiConnection() {
         
         // Дополнительный тест - запрос к эндпоинту событий
         console.log('Тестируем эндпоинт событий...');
-        const eventsResponse = await fetch('http://localhost:8000/events/', {
+        const eventsResponse = await fetch('/events/', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
