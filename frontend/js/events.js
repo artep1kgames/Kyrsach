@@ -42,7 +42,7 @@ const createEventForm = document.getElementById('createEventForm');
 // Функция загрузки категорий
 async function loadCategories() {
     try {
-        console.log('Loading categories...');
+    console.log('Loading categories...');
         
         // Пробуем сначала прямой эндпоинт
         let categoriesUrl = getApiUrl('/direct-categories');
