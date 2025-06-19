@@ -119,6 +119,7 @@ async def initialize_database():
     """Инициализация базы данных тестовыми данными"""
     try:
         from sqlalchemy.orm import sessionmaker
+        from sqlalchemy import text
         from models.models import Category, User, Event, EventStatus, EventType, UserRole
         from utils.password import get_password_hash
         from datetime import datetime, timedelta
@@ -127,8 +128,12 @@ async def initialize_database():
         
         async with async_session() as session:
             # Проверяем, есть ли уже данные
-            categories_count = await session.execute(text("SELECT COUNT(*) FROM categories;"))
-            categories_count = categories_count.scalar()
+            try:
+                categories_count = await session.execute(text("SELECT COUNT(*) FROM categories;"))
+                categories_count = categories_count.scalar()
+            except Exception as e:
+                print(f"Error checking categories count: {e}")
+                categories_count = 0
             
             if categories_count == 0:
                 print("Initializing database with test data...")
@@ -150,50 +155,63 @@ async def initialize_database():
                     session.add(category)
                 
                 # Добавляем тестового организатора
-                organizer = User(
-                    email="organizer@test.com",
-                    username="test_organizer",
-                    full_name="Test Organizer",
-                    hashed_password=get_password_hash("password123"),
-                    role=UserRole.ORGANIZER
-                )
-                session.add(organizer)
+                try:
+                    organizer = User(
+                        email="organizer@test.com",
+                        username="test_organizer",
+                        full_name="Test Organizer",
+                        hashed_password=get_password_hash("password123"),
+                        role=UserRole.ORGANIZER
+                    )
+                    session.add(organizer)
+                    print("Added test organizer")
+                except Exception as e:
+                    print(f"Error creating organizer: {e}")
                 
                 # Добавляем тестового админа
-                admin = User(
-                    email="admin@test.com",
-                    username="test_admin",
-                    full_name="Test Admin",
-                    hashed_password=get_password_hash("password123"),
-                    role=UserRole.ADMIN
-                )
-                session.add(admin)
+                try:
+                    admin = User(
+                        email="admin@test.com",
+                        username="test_admin",
+                        full_name="Test Admin",
+                        hashed_password=get_password_hash("password123"),
+                        role=UserRole.ADMIN
+                    )
+                    session.add(admin)
+                    print("Added test admin")
+                except Exception as e:
+                    print(f"Error creating admin: {e}")
                 
                 await session.commit()
                 
                 # Добавляем тестовое мероприятие
-                organizer = await session.execute(
-                    User.__table__.select().where(User.email == "organizer@test.com")
-                )
-                organizer = organizer.scalar_one()
-                
-                if organizer:
-                    event = Event(
-                        title="Test Event",
-                        short_description="Test event description",
-                        full_description="Full test event description",
-                        location="Test Location",
-                        start_date=datetime.now() + timedelta(days=7),
-                        end_date=datetime.now() + timedelta(days=7, hours=2),
-                        max_participants=50,
-                        current_participants=0,
-                        event_type=EventType.FREE,
-                        status=EventStatus.APPROVED,
-                        organizer_id=organizer.id
+                try:
+                    organizer = await session.execute(
+                        User.__table__.select().where(User.email == "organizer@test.com")
                     )
-                    session.add(event)
-                    await session.commit()
-                    print("Database initialized with test data")
+                    organizer = organizer.scalar_one()
+                    
+                    if organizer:
+                        event = Event(
+                            title="Test Event",
+                            short_description="Test event description",
+                            full_description="Full test event description",
+                            location="Test Location",
+                            start_date=datetime.now() + timedelta(days=7),
+                            end_date=datetime.now() + timedelta(days=7, hours=2),
+                            max_participants=50,
+                            current_participants=0,
+                            event_type=EventType.FREE,
+                            status=EventStatus.APPROVED,
+                            organizer_id=organizer.id
+                        )
+                        session.add(event)
+                        await session.commit()
+                        print("Added test event")
+                except Exception as e:
+                    print(f"Error creating test event: {e}")
+                
+                print("Database initialized with test data")
             else:
                 print(f"Database already contains {categories_count} categories")
                 
@@ -280,4 +298,60 @@ async def favicon():
     favicon_path = STATIC_DIR / "favicon.ico"
     if favicon_path.exists():
         return FileResponse(str(favicon_path))
-    return {"message": "Favicon not found"} 
+    return {"message": "Favicon not found"}
+
+# Прямые эндпоинты для тестирования (без роутеров)
+@app.get("/direct-categories")
+async def direct_categories():
+    try:
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy import select
+        from models.models import Category
+        
+        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+        
+        async with async_session() as session:
+            query = select(Category)
+            result = await session.execute(query)
+            categories = result.scalars().all()
+            
+            categories_list = []
+            for category in categories:
+                categories_list.append({
+                    "id": category.id,
+                    "name": category.name,
+                    "description": category.description
+                })
+            
+            return {"categories": categories_list, "count": len(categories_list)}
+    except Exception as e:
+        return {"error": str(e), "categories": []}
+
+@app.get("/direct-events")
+async def direct_events():
+    try:
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy import select
+        from models.models import Event
+        
+        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+        
+        async with async_session() as session:
+            query = select(Event)
+            result = await session.execute(query)
+            events = result.scalars().all()
+            
+            events_list = []
+            for event in events:
+                events_list.append({
+                    "id": event.id,
+                    "title": event.title,
+                    "short_description": event.short_description,
+                    "location": event.location,
+                    "start_date": event.start_date.isoformat() if event.start_date else None,
+                    "status": event.status.value if event.status else None
+                })
+            
+            return {"events": events_list, "count": len(events_list)}
+    except Exception as e:
+        return {"error": str(e), "events": []} 

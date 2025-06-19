@@ -4,6 +4,11 @@ const searchInput = document.getElementById('searchInput');
 const typeFilter = document.getElementById('typeFilter');
 const createEventBtn = document.getElementById('createEventBtn');
 
+// Глобальные переменные
+let events = [];
+let categories = [];
+let currentUser = null;
+
 // Функция для получения текущего пользователя
 function getCurrentUser() {
     const userStr = localStorage.getItem('user');
@@ -36,18 +41,14 @@ const createEventForm = document.getElementById('createEventForm');
 
 // Функция загрузки категорий
 async function loadCategories() {
-    console.log('Loading categories...');
     try {
-        const url = '/categories';
-        console.log('Fetching categories from:', url);
+        console.log('Loading categories...');
+        const categoriesUrl = getApiUrl('/direct-categories'); // Временно используем прямой эндпоинт
+        console.log('Fetching categories from:', categoriesUrl);
         
-        const response = await fetch(url, {
+        const response = await fetch(categoriesUrl, {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            credentials: 'include'  // Включаем credentials для CORS
+            headers: getAuthHeaders()
         });
 
         console.log('Response status:', response.status);
@@ -57,28 +58,24 @@ async function loadCategories() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const categories = await response.json();
-        console.log('Loaded categories:', categories);
-
-        // Обновляем фильтр категорий
-        const categoryFilter = document.getElementById('typeFilter');
-        console.log('Category filter element:', categoryFilter);
+        const data = await response.json();
+        console.log('Categories data:', data);
         
-        if (categoryFilter) {
-            const options = categories.map(category => {
-                const displayName = category.description || getCategoryDisplay(category);
-                return `<option value="${category.name}">${displayName}</option>`;
-            });
-            console.log('Generated options:', options);
-            
-            categoryFilter.innerHTML = '<option value="">Все категории</option>' + options.join('');
-            console.log('Updated filter HTML:', categoryFilter.innerHTML);
+        if (data.categories) {
+            categories = data.categories;
         } else {
-            console.error('Category filter element not found!');
+            categories = data; // Fallback для старого формата
         }
+        
+        console.log('Categories loaded:', categories);
+        displayCategories();
     } catch (error) {
         console.error('Error loading categories:', error);
-        // Не показываем alert, так как это может быть не критично для работы страницы
+        // Показываем сообщение об ошибке пользователю
+        const categoriesContainer = document.getElementById('categoriesContainer');
+        if (categoriesContainer) {
+            categoriesContainer.innerHTML = '<p class="error-message">Ошибка при загрузке категорий</p>';
+        }
     }
 }
 
@@ -267,7 +264,8 @@ function getAuthHeaders() {
     const token = localStorage.getItem('token');
     return {
         'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
+        'Accept': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
     };
 }
 
@@ -295,62 +293,42 @@ function showSuccess(message) {
     }
 }
 
-// Функция для загрузки списка мероприятий
+// Функция загрузки мероприятий
 async function loadEvents() {
     try {
         console.log('Loading events...');
-        const response = await fetch('/events', {
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            credentials: 'include'
+        const eventsUrl = getApiUrl('/direct-events'); // Временно используем прямой эндпоинт
+        console.log('Fetching events from:', eventsUrl);
+        
+        const response = await fetch(eventsUrl, {
+            method: 'GET',
+            headers: getAuthHeaders()
         });
 
         console.log('Events response status:', response.status);
 
         if (!response.ok) {
-            if (response.status === 401) {
-                removeToken();
-                removeUser();
-                showError('Пожалуйста, войдите в систему для просмотра мероприятий');
-                return;
-            }
             throw new Error('Failed to load events');
         }
 
-        const events = await response.json();
-        console.log('Loaded events:', events);
+        const data = await response.json();
+        console.log('Events data:', data);
         
-        // Отладочная информация для категорий
-        events.forEach((event, index) => {
-            console.log(`Event ${index + 1} (${event.title}):`, {
-                categories: event.categories,
-                categoriesLength: event.categories ? event.categories.length : 0,
-                hasCategories: !!event.categories
-            });
-        });
-        
-        // Фильтруем только одобренные мероприятия
-        const approvedEvents = events.filter(event => event.status === 'approved');
-        console.log('Approved events:', approvedEvents);
-        
-        displayEvents(approvedEvents);
-
-        // Показываем кнопку создания мероприятия только для организаторов и администраторов
-        if (createEventBtn) {
-            try {
-                const user = await getCurrentUser();
-                const canCreateEvents = user && (user.role === 'organizer' || user.role === 'admin');
-                createEventBtn.style.display = canCreateEvents ? 'block' : 'none';
-            } catch (error) {
-                console.error('Ошибка при проверке прав доступа:', error);
-                createEventBtn.style.display = 'none';
-            }
+        if (data.events) {
+            events = data.events;
+        } else {
+            events = data; // Fallback для старого формата
         }
+        
+        console.log('Events loaded:', events);
+        displayEvents();
     } catch (error) {
         console.error('Error loading events:', error);
-        showError('Ошибка при загрузке мероприятий');
+        // Показываем сообщение об ошибке пользователю
+        const eventsContainer = document.getElementById('eventsContainer');
+        if (eventsContainer) {
+            eventsContainer.innerHTML = '<p class="error-message">Ошибка при загрузке мероприятий</p>';
+        }
     }
 }
 
@@ -1074,4 +1052,74 @@ document.addEventListener('DOMContentLoaded', function() {
 // Обновляем список мероприятий при изменении состояния авторизации
 window.addEventListener('authStateChanged', function() {
     loadEvents();
-}); 
+});
+
+// Функция для отображения категорий
+function displayCategories() {
+    const categoryFilter = document.getElementById('typeFilter');
+    if (categoryFilter && categories) {
+        const options = categories.map(category => {
+            const displayName = category.description || getCategoryDisplay(category);
+            return `<option value="${category.name}">${displayName}</option>`;
+        });
+        
+        categoryFilter.innerHTML = '<option value="">Все категории</option>' + options.join('');
+    }
+}
+
+// Функция для отображения мероприятий
+function displayEvents() {
+    if (!events) return;
+    
+    // Фильтруем только одобренные мероприятия
+    const approvedEvents = events.filter(event => event.status === 'approved');
+    console.log('Approved events:', approvedEvents);
+    
+    const eventsContainer = document.getElementById('eventsContainer');
+    if (!eventsContainer) return;
+    
+    if (approvedEvents.length === 0) {
+        eventsContainer.innerHTML = '<p class="no-events">Нет доступных мероприятий</p>';
+        return;
+    }
+    
+    const eventsHTML = approvedEvents.map(event => {
+        const startDate = new Date(event.start_date);
+        const formattedDate = startDate.toLocaleString('ru-RU', {
+            day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        
+        return `
+            <div class="event-card" data-event-id="${event.id}">
+                <div class="event-image">
+                    <img src="${event.image_url || '/frontend/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/frontend/images/notification-icon.svg'">
+                </div>
+                <div class="event-content">
+                    <h3>${event.title}</h3>
+                    <p class="event-date">
+                        <i class="fas fa-calendar"></i>
+                        ${formattedDate}
+                    </p>
+                    <p class="event-description">${event.short_description}</p>
+                    <div class="event-footer">
+                        <div class="event-meta">
+                            <span class="event-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                ${event.location}
+                            </span>
+                            <span class="event-participants">
+                                <i class="fas fa-users"></i>
+                                ${event.current_participants || 0}/${event.max_participants}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="event-actions">
+                        <a href="event.html?id=${event.id}" class="btn btn-primary"><i class="fas fa-eye"></i> Подробнее</a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    eventsContainer.innerHTML = eventsHTML;
+} 
