@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -10,6 +10,7 @@ from sqladmin import Admin
 from admin import UserAdmin, EventAdmin, CategoryAdmin
 from models import models
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 
 app = FastAPI(title="EventHub API")
 
@@ -43,18 +44,44 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 (UPLOAD_DIR / "events").mkdir(parents=True, exist_ok=True)
 (UPLOAD_DIR / "users").mkdir(parents=True, exist_ok=True)
 
-# Монтируем статические файлы
+# Тестовый роутер для проверки
+test_router = APIRouter(prefix="/test-api", tags=["test"])
+
+@test_router.get("/hello")
+async def hello():
+    return {"message": "Hello from test router!"}
+
+@test_router.get("/categories")
+async def test_categories():
+    return {"message": "Categories endpoint test", "categories": ["test1", "test2"]}
+
+@test_router.get("/events")
+async def test_events():
+    return {"message": "Events endpoint test", "events": ["event1", "event2"]}
+
+# Регистрируем роутеры ПЕРЕД монтированием статических файлов
+print("Registering routers...")
+app.include_router(test_router)
+print("✓ Test router registered")
+app.include_router(auth.router)
+print("✓ Auth router registered")
+app.include_router(events.router)
+print("✓ Events router registered")
+app.include_router(users.router)
+print("✓ Users router registered")
+app.include_router(calendar.router)
+print("✓ Calendar router registered")
+app.include_router(admin.router)
+print("✓ Admin router registered")
+app.include_router(categories.router)
+print("✓ Categories router registered")
+app.include_router(event_creation.router)
+print("✓ Event creation router registered")
+print("All routers registered successfully!")
+
+# Монтируем статические файлы ПОСЛЕ регистрации роутеров
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
-
-# Регистрируем роутеры
-app.include_router(auth.router)
-app.include_router(events.router)
-app.include_router(users.router)
-app.include_router(calendar.router)
-app.include_router(admin.router)
-app.include_router(categories.router)
-app.include_router(event_creation.router)
 
 # Монтируем фронтенд (отдача index.html и других файлов)
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
@@ -69,14 +96,24 @@ admin.add_view(CategoryAdmin)
 @app.on_event("startup")
 async def startup():
     try:
+        print("Starting application...")
         async with engine.begin() as conn:
             await conn.run_sync(models.Base.metadata.create_all)
+        print("Database tables created successfully")
         
         # Инициализируем базу данных тестовыми данными
-        await initialize_database()
+        try:
+            await initialize_database()
+        except Exception as e:
+            print(f"Warning: Database initialization failed: {e}")
+            print("Application will continue without test data")
+            
     except Exception as e:
         print(f"Error during startup: {e}")
-        raise
+        import traceback
+        traceback.print_exc()
+        # Не прерываем запуск приложения при ошибках
+        print("Application will continue despite startup errors")
 
 async def initialize_database():
     """Инициализация базы данных тестовыми данными"""
@@ -90,7 +127,7 @@ async def initialize_database():
         
         async with async_session() as session:
             # Проверяем, есть ли уже данные
-            categories_count = await session.execute("SELECT COUNT(*) FROM categories;")
+            categories_count = await session.execute(text("SELECT COUNT(*) FROM categories;"))
             categories_count = categories_count.scalar()
             
             if categories_count == 0:
@@ -178,23 +215,53 @@ async def shutdown():
 async def read_root():
     return {"message": "Welcome to EventHub API"}
 
+# Тестовый эндпоинт для проверки работы сервера
+@app.get("/test")
+async def test_endpoint():
+    return {"message": "Server is working", "status": "ok"}
+
+# Эндпоинт для проверки работы роутеров
+@app.get("/test/routers")
+async def test_routers():
+    return {
+        "message": "Testing router endpoints",
+        "endpoints": {
+            "categories": "/categories",
+            "events": "/events",
+            "test_api": "/test-api/hello"
+        }
+    }
+
+# Эндпоинт для просмотра всех зарегистрированных роутов
+@app.get("/debug/routes")
+async def debug_routes():
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'path'):
+            routes.append({
+                "path": route.path,
+                "name": getattr(route, 'name', 'Unknown'),
+                "methods": getattr(route, 'methods', [])
+            })
+    return {"routes": routes}
+
 # Отладочный эндпоинт для проверки базы данных
 @app.get("/debug/db")
 async def debug_database():
     try:
         async with engine.begin() as conn:
             # Проверяем таблицы
-            result = await conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            result = await conn.execute(text("SELECT name FROM sqlite_master WHERE type='table';"))
             tables = result.fetchall()
             
             # Проверяем количество записей в основных таблицах
-            events_count = await conn.execute("SELECT COUNT(*) FROM events;")
+            events_count = await conn.execute(text("SELECT COUNT(*) FROM events;"))
             events_count = events_count.scalar()
             
-            categories_count = await conn.execute("SELECT COUNT(*) FROM categories;")
+            categories_count = await conn.execute(text("SELECT COUNT(*) FROM categories;"))
             categories_count = categories_count.scalar()
             
-            users_count = await conn.execute("SELECT COUNT(*) FROM users;")
+            users_count = await conn.execute(text("SELECT COUNT(*) FROM users;"))
             users_count = users_count.scalar()
             
             return {
