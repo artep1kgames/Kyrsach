@@ -77,7 +77,7 @@ async function loadUpcomingEvents() {
     try {
         const user = await getUser();
         if (!user) return;
-        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.BASE), {
+        const response = await fetch(getApiUrl('/users/me/upcoming-events'), {
             headers: getAuthHeaders()
         });
 
@@ -86,19 +86,9 @@ async function loadUpcomingEvents() {
         }
 
         const events = await response.json();
-        let myUpcomingEvents;
-        if (user.role === 'admin') {
-            myUpcomingEvents = events.filter(event => event.organizer_id === user.id && new Date(event.start_date) > new Date());
-        } else {
-            myUpcomingEvents = events.filter(event => {
-                const isOrganizer = event.organizer_id === user.id;
-                const isParticipant = Array.isArray(event.participants) && event.participants.some(p => p.user_id === user.id);
-                return (isOrganizer || isParticipant) && new Date(event.start_date) > new Date();
-            });
-        }
         const container = document.getElementById('upcomingEvents');
         if (container) {
-            displayEvents(myUpcomingEvents, 'upcomingEvents');
+            displayEvents(events, 'upcomingEvents');
         } else {
             console.warn('Container for upcoming events not found');
         }
@@ -116,7 +106,7 @@ async function loadPastEvents() {
     try {
         const user = await getUser();
         if (!user) return;
-        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.BASE), {
+        const response = await fetch(getApiUrl('/users/me/past-events'), {
             headers: getAuthHeaders()
         });
 
@@ -125,19 +115,9 @@ async function loadPastEvents() {
         }
 
         const events = await response.json();
-        let myPastEvents;
-        if (user.role === 'admin') {
-            myPastEvents = events.filter(event => event.organizer_id === user.id && new Date(event.start_date) <= new Date());
-        } else {
-            myPastEvents = events.filter(event => {
-                const isOrganizer = event.organizer_id === user.id;
-                const isParticipant = Array.isArray(event.participants) && event.participants.some(p => p.user_id === user.id);
-                return (isOrganizer || isParticipant) && new Date(event.start_date) <= new Date();
-            });
-        }
         const container = document.getElementById('pastEvents');
         if (container) {
-            displayEvents(myPastEvents, 'pastEvents');
+            displayEvents(events, 'pastEvents');
         } else {
             console.warn('Container for past events not found');
         }
@@ -162,7 +142,7 @@ async function loadOrganizerEvents() {
     }
 
     try {
-        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.BASE), {
+        const response = await fetch(getApiUrl('/users/me/events'), {
             headers: getAuthHeaders()
         });
 
@@ -171,12 +151,9 @@ async function loadOrganizerEvents() {
         }
 
         const events = await response.json();
-        // Фильтруем мероприятия организатора на клиенте
-        const organizerEvents = events.filter(event => event.organizer_id === user.id);
-        
         const container = document.getElementById('myEvents');
         if (container) {
-            displayEvents(organizerEvents, 'myEvents');
+            displayEvents(events, 'myEvents');
         } else {
             console.warn('Container for organizer events not found');
         }

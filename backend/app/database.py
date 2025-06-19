@@ -1,10 +1,12 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
+import os
 
-SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///./events.db"
+# Используем переменную окружения для пути к базе данных или значение по умолчанию
+DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite+aiosqlite:///./events.db')
 
 engine = create_async_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    DATABASE_URL, connect_args={"check_same_thread": False}
 )
 
 AsyncSessionLocal = sessionmaker(

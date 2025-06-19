@@ -19,7 +19,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://127.0.0.1:5500",
-        "http://localhost:5500"
+        "http://localhost:5500",
+        "https://kyrsach-0x7m.onrender.com",
+        "http://kyrsach-0x7m.onrender.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],

@@ -1,5 +1,7 @@
 const API_CONFIG = {
-    BASE_URL: '',
+    BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:8000'
+        : '',
     ENDPOINTS: {
         AUTH: {
             LOGIN: '/auth/token',
@@ -13,10 +15,10 @@ const API_CONFIG = {
             MODERATION: '/events/moderation',
             MODERATE: '/events/moderate',
             CREATE: '/events',
-            UPDATE: '/events/update',
-            DELETE: '/events/delete',
-            JOIN: '/events/join',
-            LEAVE: '/events/leave',
+            UPDATE: '/events/{id}',
+            DELETE: '/events/{id}',
+            JOIN: '/events/{id}/participate',
+            LEAVE: '/events/{id}/participate',
             PARTICIPATE: '/events/{id}/participate',
             CANCEL_PARTICIPATION: '/events/{id}/participate'
         },
