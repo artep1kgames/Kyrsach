@@ -6,11 +6,11 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from database import get_db
-from schemas.schemas import Token, UserCreate, UserResponse, TokenData
-from services.user_service import create_user, authenticate_user
-from utils.auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
-from models.models import User, UserRole
+from app.database import get_db
+from app.schemas.schemas import Token, UserCreate, UserResponse, TokenData
+from app.services.user_service import create_user, authenticate_user
+from app.utils.auth import create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.models.models import User, UserRole
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

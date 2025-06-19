@@ -1,12 +1,12 @@
 from sqladmin import ModelView, Admin
 from sqlalchemy.orm import Session
-from models.models import Event
-from models.models import User
-from models.models import Category
-from database import engine
+from app.models.models import Event
+from app.models.models import User
+from app.models.models import Category
+from app.database import engine
 from fastapi import FastAPI, Depends
-from utils.auth import get_current_user
-from auth_admin import AdminAuth
+from app.utils.auth import get_current_user
+from app.auth_admin import AdminAuth
 from typing import Optional
 
 class UserAdmin(ModelView, model=User):

@@ -5,14 +5,14 @@ from sqlalchemy import or_
 from sqlalchemy.orm import selectinload, joinedload
 from typing import List, Optional
 from datetime import datetime
-from database import get_db
-from models import models
-from schemas import schemas
-from utils.auth import get_current_user
+from app.database import get_db
+from app.models import models
+from app.schemas import schemas
+from app.utils.auth import get_current_user
 import shutil
 import os
 from pathlib import Path
-from services.event_service import create_event, get_event, update_event, delete_event
+from app.services.event_service import create_event, get_event, update_event, delete_event
 
 router = APIRouter(
     prefix="/events",

@@ -5,11 +5,11 @@ from sqlalchemy import select
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from database import get_db
-from models.models import User, UserRole
-from schemas.schemas import UserCreate, UserResponse, Token
-from utils.auth import verify_password, get_password_hash, create_access_token
-from utils.password import verify_password, get_password_hash
+from app.database import get_db
+from app.models.models import User, UserRole
+from app.schemas.schemas import UserCreate, UserResponse, Token
+from app.utils.auth import verify_password, get_password_hash, create_access_token
+from app.utils.password import verify_password, get_password_hash
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
