@@ -47,6 +47,9 @@ const API_CONFIG = {
 // Функция для получения полного URL эндпоинта
 function getApiUrl(endpoint, params = {}) {
     console.log('getApiUrl вызвана с параметрами:', { endpoint, params });
+    console.log('Текущий hostname:', window.location.hostname);
+    console.log('Текущий protocol:', window.location.protocol);
+    console.log('Текущий port:', window.location.port);
     
     // Убедимся, что endpoint начинается с '/'
     if (!endpoint.startsWith('/')) {
@@ -55,6 +58,7 @@ function getApiUrl(endpoint, params = {}) {
     
     let url = API_CONFIG.BASE_URL + endpoint;
     console.log('Базовый URL:', url);
+    console.log('API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
     
     // Создаем множество для отслеживания использованных параметров
     const usedParams = new Set();

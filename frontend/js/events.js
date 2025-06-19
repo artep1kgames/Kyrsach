@@ -43,16 +43,38 @@ const createEventForm = document.getElementById('createEventForm');
 async function loadCategories() {
     try {
         console.log('Loading categories...');
-        const categoriesUrl = getApiUrl('/direct-categories'); // Временно используем прямой эндпоинт
+        
+        // Пробуем сначала прямой эндпоинт
+        let categoriesUrl = getApiUrl('/direct-categories');
         console.log('Fetching categories from:', categoriesUrl);
         
-        const response = await fetch(categoriesUrl, {
+        let response = await fetch(categoriesUrl, {
             method: 'GET',
             headers: getAuthHeaders()
         });
 
         console.log('Response status:', response.status);
         console.log('Response headers:', response.headers);
+
+        // Если прямой эндпоинт не работает, пробуем роутер
+        if (!response.ok) {
+            console.log('Direct endpoint failed, trying router endpoint...');
+            categoriesUrl = getApiUrl('/categories');
+            response = await fetch(categoriesUrl, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+        }
+
+        // Если и роутер не работает, пробуем тестовый эндпоинт
+        if (!response.ok) {
+            console.log('Router endpoint failed, trying test endpoint...');
+            categoriesUrl = getApiUrl('/test-api/categories');
+            response = await fetch(categoriesUrl, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+        }
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -297,15 +319,37 @@ function showSuccess(message) {
 async function loadEvents() {
     try {
         console.log('Loading events...');
-        const eventsUrl = getApiUrl('/direct-events'); // Временно используем прямой эндпоинт
+        
+        // Пробуем сначала прямой эндпоинт
+        let eventsUrl = getApiUrl('/direct-events');
         console.log('Fetching events from:', eventsUrl);
         
-        const response = await fetch(eventsUrl, {
+        let response = await fetch(eventsUrl, {
             method: 'GET',
             headers: getAuthHeaders()
         });
 
         console.log('Events response status:', response.status);
+
+        // Если прямой эндпоинт не работает, пробуем роутер
+        if (!response.ok) {
+            console.log('Direct endpoint failed, trying router endpoint...');
+            eventsUrl = getApiUrl('/events');
+            response = await fetch(eventsUrl, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+        }
+
+        // Если и роутер не работает, пробуем тестовый эндпоинт
+        if (!response.ok) {
+            console.log('Router endpoint failed, trying test endpoint...');
+            eventsUrl = getApiUrl('/test-api/events');
+            response = await fetch(eventsUrl, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+        }
 
         if (!response.ok) {
             throw new Error('Failed to load events');

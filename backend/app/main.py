@@ -79,6 +79,109 @@ app.include_router(event_creation.router)
 print("✓ Event creation router registered")
 print("All routers registered successfully!")
 
+# Прямые эндпоинты для тестирования (БЕЗ роутеров) - ДОЛЖНЫ БЫТЬ ПЕРЕД монтированием статики
+@app.get("/direct-categories")
+async def direct_categories():
+    try:
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy import select
+        from models.models import Category
+        
+        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+        
+        async with async_session() as session:
+            query = select(Category)
+            result = await session.execute(query)
+            categories = result.scalars().all()
+            
+            categories_list = []
+            for category in categories:
+                categories_list.append({
+                    "id": category.id,
+                    "name": category.name,
+                    "description": category.description
+                })
+            
+            return {"categories": categories_list, "count": len(categories_list)}
+    except Exception as e:
+        print(f"Error in direct_categories: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e), "categories": []}
+
+@app.get("/direct-events")
+async def direct_events():
+    try:
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy import select
+        from models.models import Event, User, Category
+        from sqlalchemy.orm import selectinload, joinedload
+        
+        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+        
+        async with async_session() as session:
+            # Загружаем события с организатором и категориями
+            query = select(Event).options(
+                joinedload(Event.organizer),
+                selectinload(Event.categories)
+            )
+            result = await session.execute(query)
+            events = result.unique().scalars().all()
+            
+            events_list = []
+            for event in events:
+                # Получаем участников для каждого мероприятия
+                participants_query = select(models.event_participants).where(
+                    models.event_participants.c.event_id == event.id
+                )
+                participants_result = await session.execute(participants_query)
+                participants = participants_result.fetchall()
+                
+                event_dict = {
+                    "id": event.id,
+                    "title": event.title,
+                    "short_description": event.short_description,
+                    "full_description": event.full_description,
+                    "location": event.location,
+                    "start_date": event.start_date.isoformat() if event.start_date else None,
+                    "end_date": event.end_date.isoformat() if event.end_date else None,
+                    "max_participants": event.max_participants,
+                    "current_participants": event.current_participants,
+                    "status": event.status.value if event.status else None,
+                    "event_type": event.event_type.value if event.event_type else None,
+                    "ticket_price": event.ticket_price,
+                    "image_url": event.image_url,
+                    "organizer_id": event.organizer_id,
+                    "organizer": {
+                        "id": event.organizer.id,
+                        "username": event.organizer.username,
+                        "email": event.organizer.email,
+                        "full_name": event.organizer.full_name
+                    } if event.organizer else None,
+                    "categories": [
+                        {
+                            "id": cat.id,
+                            "name": cat.name,
+                            "description": cat.description
+                        } for cat in event.categories
+                    ] if event.categories else [],
+                    "participants": [
+                        {
+                            "user_id": p.user_id,
+                            "event_id": p.event_id,
+                            "ticket_purchased": p.ticket_purchased
+                        } for p in participants
+                    ] if participants else []
+                }
+                events_list.append(event_dict)
+            
+            return {"events": events_list, "count": len(events_list)}
+    except Exception as e:
+        print(f"Error in direct_events: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e), "events": []}
+
 # Монтируем статические файлы ПОСЛЕ регистрации роутеров
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
@@ -292,6 +395,20 @@ async def debug_database():
     except Exception as e:
         return {"error": str(e)}
 
+# Отладочный эндпоинт для проверки прямых эндпоинтов
+@app.get("/debug/direct-endpoints")
+async def debug_direct_endpoints():
+    return {
+        "message": "Direct endpoints test",
+        "endpoints": {
+            "direct_categories": "/direct-categories",
+            "direct_events": "/direct-events",
+            "test_categories": "/test-api/categories",
+            "test_events": "/test-api/events"
+        },
+        "note": "These endpoints should work before static file mounting"
+    }
+
 # Обработчик для favicon
 @app.get("/favicon.ico")
 async def favicon():
@@ -299,59 +416,3 @@ async def favicon():
     if favicon_path.exists():
         return FileResponse(str(favicon_path))
     return {"message": "Favicon not found"} 
-
-# Прямые эндпоинты для тестирования (без роутеров)
-@app.get("/direct-categories")
-async def direct_categories():
-    try:
-        from sqlalchemy.orm import sessionmaker
-        from sqlalchemy import select
-        from models.models import Category
-        
-        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-        
-        async with async_session() as session:
-            query = select(Category)
-            result = await session.execute(query)
-            categories = result.scalars().all()
-            
-            categories_list = []
-            for category in categories:
-                categories_list.append({
-                    "id": category.id,
-                    "name": category.name,
-                    "description": category.description
-                })
-            
-            return {"categories": categories_list, "count": len(categories_list)}
-    except Exception as e:
-        return {"error": str(e), "categories": []}
-
-@app.get("/direct-events")
-async def direct_events():
-    try:
-        from sqlalchemy.orm import sessionmaker
-        from sqlalchemy import select
-        from models.models import Event
-        
-        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-        
-        async with async_session() as session:
-            query = select(Event)
-            result = await session.execute(query)
-            events = result.scalars().all()
-            
-            events_list = []
-            for event in events:
-                events_list.append({
-                    "id": event.id,
-                    "title": event.title,
-                    "short_description": event.short_description,
-                    "location": event.location,
-                    "start_date": event.start_date.isoformat() if event.start_date else None,
-                    "status": event.status.value if event.status else None
-                })
-            
-            return {"events": events_list, "count": len(events_list)}
-    except Exception as e:
-        return {"error": str(e), "events": []} 
