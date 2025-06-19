@@ -58,6 +58,23 @@ class EventImageResponse(EventImageBase):
     class Config:
         from_attributes = True
 
+class CategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class CategoryCreate(CategoryBase):
+    pass
+
+class CategoryUpdate(CategoryBase):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class CategoryResponse(CategoryBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
 class EventBase(BaseModel):
     title: str
     short_description: str
@@ -84,34 +101,13 @@ class EventResponse(EventBase):
     status: EventStatus
     rejection_reason: Optional[str]
     organizer_id: int
-    organizer: UserResponse
+    organizer: Optional[UserResponse]
     image_url: Optional[str]
-    images: List[EventImageResponse]
-    categories: List["CategoryResponse"]
+    images: List[EventImageResponse] = []
+    categories: List[CategoryResponse] = []
 
     class Config:
         from_attributes = True
-
-class CategoryBase(BaseModel):
-    name: str
-    description: Optional[str] = None
-
-class CategoryCreate(CategoryBase):
-    pass
-
-class CategoryUpdate(CategoryBase):
-    name: Optional[str] = None
-    description: Optional[str] = None
-
-class CategoryResponse(CategoryBase):
-    id: int
-    events: List["EventResponse"] = []
-
-    class Config:
-        from_attributes = True
-
-# Обновляем EventResponse для избежания циклических зависимостей
-EventResponse.update_forward_refs()
 
 class ParticipationCreate(BaseModel):
     event_id: int

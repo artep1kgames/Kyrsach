@@ -146,25 +146,43 @@ async def read_user_events(
     db: AsyncSession = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    # Создаем один запрос с условиями для организатора и участника
-    query = select(models.Event).options(
-        joinedload(models.Event.organizer),
-        selectinload(models.Event.images),
-        selectinload(models.Event.categories)
-    ).where(
-        or_(
-            models.Event.organizer_id == current_user.id,
-            models.Event.id.in_(
-                select(models.event_participants.c.event_id).where(
-                    models.event_participants.c.user_id == current_user.id
+    try:
+        print(f"Loading events for user {current_user.id} with role {current_user.role}")
+        
+        # Создаем один запрос с условиями для организатора и участника
+        query = select(models.Event).options(
+            joinedload(models.Event.organizer),
+            selectinload(models.Event.images),
+            selectinload(models.Event.categories)
+        )
+
+        # Если пользователь организатор, показываем его мероприятия
+        if current_user.role == models.UserRole.ORGANIZER:
+            print("User is organizer, loading created events")
+            query = query.where(models.Event.organizer_id == current_user.id)
+        else:
+            print("User is participant, loading participated events")
+            query = query.where(
+                models.Event.id.in_(
+                    select(models.event_participants.c.event_id).where(
+                        models.event_participants.c.user_id == current_user.id
+                    )
                 )
             )
+        
+        result = await db.execute(query)
+        events = result.unique().scalars().all()
+        print(f"Found {len(events)} events")
+        
+        return events
+    except Exception as e:
+        print(f"Error in read_user_events: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error loading events: {str(e)}"
         )
-    )
-    
-    result = await db.execute(query)
-    events = result.unique().scalars().all()
-    return events
 
 @router.get("/me/upcoming-events", response_model=List[schemas.EventResponse])
 async def read_user_upcoming_events(
