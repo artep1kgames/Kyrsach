@@ -114,8 +114,6 @@ async def get_events(
     end_date: Optional[datetime] = Query(None, description="End date in ISO format"),
     db: AsyncSession = Depends(get_db)
 ):
-    print(f"=== Events endpoint called ===")
-    print(f"Skip: {skip}, Limit: {limit}, Search: {search}")
     try:
         print("Starting get_events function")
         query = select(models.Event).options(
