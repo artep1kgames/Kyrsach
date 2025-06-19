@@ -19,6 +19,8 @@ async def read_categories(
     db: AsyncSession = Depends(get_db)
 ):
     """Эндпоинт для получения категорий из базы данных"""
+    print(f"=== Categories endpoint called ===")
+    print(f"Skip: {skip}, Limit: {limit}")
     try:
         print("Starting read_categories function")
         query = select(models.Category).offset(skip).limit(limit)
@@ -40,6 +42,7 @@ async def read_categories(
             })
         
         print(f"Categories: {categories_list}")
+        print(f"=== Categories endpoint completed ===")
         return categories_list
         
     except Exception as e:
@@ -58,6 +61,7 @@ async def read_categories(
             {"id": 7, "name": "SPORTS", "description": "Спортивное мероприятие"},
             {"id": 8, "name": "OTHER", "description": "Другое"}
         ]
+        print(f"Returning fallback categories: {fallback_categories}")
         return fallback_categories
 
 @router.post("/", response_model=schemas.CategoryResponse)

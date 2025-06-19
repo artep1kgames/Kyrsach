@@ -4,10 +4,10 @@ import os
 
 # Настройка хеширования паролей с более простой конфигурацией
 try:
-    pwd_context = CryptContext(
-        schemes=["bcrypt"],
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
         deprecated="auto"
-    )
+)
     USE_BCRYPT = True
 except Exception as e:
     print(f"Warning: bcrypt not available, using fallback hashing: {e}")
@@ -19,7 +19,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     try:
         if USE_BCRYPT:
-            return pwd_context.verify(plain_password, hashed_password)
+        return pwd_context.verify(plain_password, hashed_password)
         else:
             # Fallback: простое хеширование (не для продакшена)
             return hashed_password == simple_hash(plain_password)
@@ -33,7 +33,7 @@ def get_password_hash(password: str) -> str:
     """
     try:
         if USE_BCRYPT:
-            return pwd_context.hash(password)
+        return pwd_context.hash(password)
         else:
             # Fallback: простое хеширование (не для продакшена)
             return simple_hash(password)

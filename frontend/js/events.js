@@ -43,7 +43,7 @@ const createEventForm = document.getElementById('createEventForm');
 async function loadCategories() {
     try {
         console.log('Loading categories...');
-        const categoriesUrl = getApiUrl('/direct-categories'); // Временно используем прямой эндпоинт
+        const categoriesUrl = getApiUrl('/categories'); // Используем правильный роутер
         console.log('Fetching categories from:', categoriesUrl);
         
         const response = await fetch(categoriesUrl, {
@@ -157,7 +157,7 @@ document.getElementById('createEventForm').addEventListener('submit', async func
         let category_ids = [];
         
         // Получаем все категории для поиска ID по названию
-        const categoriesResponse = await fetch('/categories', {
+        const categoriesResponse = await fetch(getApiUrl('/categories'), {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -297,7 +297,7 @@ function showSuccess(message) {
 async function loadEvents() {
     try {
         console.log('Loading events...');
-        const eventsUrl = getApiUrl('/direct-events'); // Временно используем прямой эндпоинт
+        const eventsUrl = getApiUrl('/events'); // Используем правильный роутер
         console.log('Fetching events from:', eventsUrl);
         
         const response = await fetch(eventsUrl, {
@@ -1052,7 +1052,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Обновляем список мероприятий при изменении состояния авторизации
 window.addEventListener('authStateChanged', function() {
     loadEvents();
-});
+}); 
 
 // Функция для отображения категорий
 function displayCategories() {
