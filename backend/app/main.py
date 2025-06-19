@@ -45,6 +45,10 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
+# Монтируем фронтенд (отдача index.html и других файлов)
+FRONTEND_DIR = BASE_DIR.parent / "frontend"
+app.mount("", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
+
 # Регистрируем роутеры
 app.include_router(auth.router)
 app.include_router(events.router)
