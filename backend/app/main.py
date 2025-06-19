@@ -4,8 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 from pathlib import Path
-from routers import auth, events, users, calendar, admin, event_creation
-from routes import categories
+from routers import auth, events, users, calendar, admin, event_creation, categories
 from database import engine, Base
 from sqladmin import Admin
 from admin import UserAdmin, EventAdmin, CategoryAdmin
@@ -72,9 +71,99 @@ async def startup():
     try:
         async with engine.begin() as conn:
             await conn.run_sync(models.Base.metadata.create_all)
+        
+        # Инициализируем базу данных тестовыми данными
+        await initialize_database()
     except Exception as e:
         print(f"Error during startup: {e}")
         raise
+
+async def initialize_database():
+    """Инициализация базы данных тестовыми данными"""
+    try:
+        from sqlalchemy.orm import sessionmaker
+        from models.models import Category, User, Event, EventStatus, EventType, UserRole
+        from utils.password import get_password_hash
+        from datetime import datetime, timedelta
+        
+        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+        
+        async with async_session() as session:
+            # Проверяем, есть ли уже данные
+            categories_count = await session.execute("SELECT COUNT(*) FROM categories;")
+            categories_count = categories_count.scalar()
+            
+            if categories_count == 0:
+                print("Initializing database with test data...")
+                
+                # Добавляем категории
+                categories_data = [
+                    ("CONFERENCE", "Конференция"),
+                    ("SEMINAR", "Семинар"),
+                    ("WORKSHOP", "Мастер-класс"),
+                    ("EXHIBITION", "Выставка"),
+                    ("CONCERT", "Концерт"),
+                    ("FESTIVAL", "Фестиваль"),
+                    ("SPORTS", "Спортивное мероприятие"),
+                    ("OTHER", "Другое")
+                ]
+                
+                for code, name in categories_data:
+                    category = Category(name=code, description=name)
+                    session.add(category)
+                
+                # Добавляем тестового организатора
+                organizer = User(
+                    email="organizer@test.com",
+                    username="test_organizer",
+                    full_name="Test Organizer",
+                    hashed_password=get_password_hash("password123"),
+                    role=UserRole.ORGANIZER
+                )
+                session.add(organizer)
+                
+                # Добавляем тестового админа
+                admin = User(
+                    email="admin@test.com",
+                    username="test_admin",
+                    full_name="Test Admin",
+                    hashed_password=get_password_hash("password123"),
+                    role=UserRole.ADMIN
+                )
+                session.add(admin)
+                
+                await session.commit()
+                
+                # Добавляем тестовое мероприятие
+                organizer = await session.execute(
+                    User.__table__.select().where(User.email == "organizer@test.com")
+                )
+                organizer = organizer.scalar_one()
+                
+                if organizer:
+                    event = Event(
+                        title="Test Event",
+                        short_description="Test event description",
+                        full_description="Full test event description",
+                        location="Test Location",
+                        start_date=datetime.now() + timedelta(days=7),
+                        end_date=datetime.now() + timedelta(days=7, hours=2),
+                        max_participants=50,
+                        current_participants=0,
+                        event_type=EventType.FREE,
+                        status=EventStatus.APPROVED,
+                        organizer_id=organizer.id
+                    )
+                    session.add(event)
+                    await session.commit()
+                    print("Database initialized with test data")
+            else:
+                print(f"Database already contains {categories_count} categories")
+                
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+        import traceback
+        traceback.print_exc()
 
 # Корректное завершение работы
 @app.on_event("shutdown")
@@ -88,6 +177,35 @@ async def shutdown():
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to EventHub API"}
+
+# Отладочный эндпоинт для проверки базы данных
+@app.get("/debug/db")
+async def debug_database():
+    try:
+        async with engine.begin() as conn:
+            # Проверяем таблицы
+            result = await conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            tables = result.fetchall()
+            
+            # Проверяем количество записей в основных таблицах
+            events_count = await conn.execute("SELECT COUNT(*) FROM events;")
+            events_count = events_count.scalar()
+            
+            categories_count = await conn.execute("SELECT COUNT(*) FROM categories;")
+            categories_count = categories_count.scalar()
+            
+            users_count = await conn.execute("SELECT COUNT(*) FROM users;")
+            users_count = users_count.scalar()
+            
+            return {
+                "tables": [table[0] for table in tables],
+                "events_count": events_count,
+                "categories_count": categories_count,
+                "users_count": users_count,
+                "database_url": str(engine.url)
+            }
+    except Exception as e:
+        return {"error": str(e)}
 
 # Обработчик для favicon
 @app.get("/favicon.ico")
