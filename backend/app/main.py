@@ -119,7 +119,6 @@ async def initialize_database():
     """Инициализация базы данных тестовыми данными"""
     try:
         from sqlalchemy.orm import sessionmaker
-        from sqlalchemy import text
         from models.models import Category, User, Event, EventStatus, EventType, UserRole
         from utils.password import get_password_hash
         from datetime import datetime, timedelta
@@ -128,12 +127,8 @@ async def initialize_database():
         
         async with async_session() as session:
             # Проверяем, есть ли уже данные
-            try:
-                categories_count = await session.execute(text("SELECT COUNT(*) FROM categories;"))
-                categories_count = categories_count.scalar()
-            except Exception as e:
-                print(f"Error checking categories count: {e}")
-                categories_count = 0
+            categories_count = await session.execute(text("SELECT COUNT(*) FROM categories;"))
+            categories_count = categories_count.scalar()
             
             if categories_count == 0:
                 print("Initializing database with test data...")
@@ -155,63 +150,50 @@ async def initialize_database():
                     session.add(category)
                 
                 # Добавляем тестового организатора
-                try:
-                    organizer = User(
-                        email="organizer@test.com",
-                        username="test_organizer",
-                        full_name="Test Organizer",
-                        hashed_password=get_password_hash("password123"),
-                        role=UserRole.ORGANIZER
-                    )
-                    session.add(organizer)
-                    print("Added test organizer")
-                except Exception as e:
-                    print(f"Error creating organizer: {e}")
+                organizer = User(
+                    email="organizer@test.com",
+                    username="test_organizer",
+                    full_name="Test Organizer",
+                    hashed_password=get_password_hash("password123"),
+                    role=UserRole.ORGANIZER
+                )
+                session.add(organizer)
                 
                 # Добавляем тестового админа
-                try:
-                    admin = User(
-                        email="admin@test.com",
-                        username="test_admin",
-                        full_name="Test Admin",
-                        hashed_password=get_password_hash("password123"),
-                        role=UserRole.ADMIN
-                    )
-                    session.add(admin)
-                    print("Added test admin")
-                except Exception as e:
-                    print(f"Error creating admin: {e}")
+                admin = User(
+                    email="admin@test.com",
+                    username="test_admin",
+                    full_name="Test Admin",
+                    hashed_password=get_password_hash("password123"),
+                    role=UserRole.ADMIN
+                )
+                session.add(admin)
                 
                 await session.commit()
                 
                 # Добавляем тестовое мероприятие
-                try:
-                    organizer = await session.execute(
-                        User.__table__.select().where(User.email == "organizer@test.com")
-                    )
-                    organizer = organizer.scalar_one()
-                    
-                    if organizer:
-                        event = Event(
-                            title="Test Event",
-                            short_description="Test event description",
-                            full_description="Full test event description",
-                            location="Test Location",
-                            start_date=datetime.now() + timedelta(days=7),
-                            end_date=datetime.now() + timedelta(days=7, hours=2),
-                            max_participants=50,
-                            current_participants=0,
-                            event_type=EventType.FREE,
-                            status=EventStatus.APPROVED,
-                            organizer_id=organizer.id
-                        )
-                        session.add(event)
-                        await session.commit()
-                        print("Added test event")
-                except Exception as e:
-                    print(f"Error creating test event: {e}")
+                organizer = await session.execute(
+                    User.__table__.select().where(User.email == "organizer@test.com")
+                )
+                organizer = organizer.scalar_one()
                 
-                print("Database initialized with test data")
+                if organizer:
+                    event = Event(
+                        title="Test Event",
+                        short_description="Test event description",
+                        full_description="Full test event description",
+                        location="Test Location",
+                        start_date=datetime.now() + timedelta(days=7),
+                        end_date=datetime.now() + timedelta(days=7, hours=2),
+                        max_participants=50,
+                        current_participants=0,
+                        event_type=EventType.FREE,
+                        status=EventStatus.APPROVED,
+                        organizer_id=organizer.id
+                    )
+                    session.add(event)
+                    await session.commit()
+                    print("Database initialized with test data")
             else:
                 print(f"Database already contains {categories_count} categories")
                 
@@ -298,7 +280,7 @@ async def favicon():
     favicon_path = STATIC_DIR / "favicon.ico"
     if favicon_path.exists():
         return FileResponse(str(favicon_path))
-    return {"message": "Favicon not found"} 
+    return {"message": "Favicon not found"}
 
 # Прямые эндпоинты для тестирования (без роутеров)
 @app.get("/direct-categories")

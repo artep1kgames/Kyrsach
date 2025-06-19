@@ -149,11 +149,11 @@ async def read_user_events(
     try:
         print(f"Loading events for user {current_user.id} with role {current_user.role}")
         
-    # Создаем один запрос с условиями для организатора и участника
-    query = select(models.Event).options(
-        joinedload(models.Event.organizer),
-        selectinload(models.Event.images),
-        selectinload(models.Event.categories)
+        # Создаем один запрос с условиями для организатора и участника
+        query = select(models.Event).options(
+            joinedload(models.Event.organizer),
+            selectinload(models.Event.images),
+            selectinload(models.Event.categories)
         )
 
         # Если пользователь организатор, показываем его мероприятия
@@ -163,18 +163,18 @@ async def read_user_events(
         else:
             print("User is participant, loading participated events")
             query = query.where(
-            models.Event.id.in_(
-                select(models.event_participants.c.event_id).where(
-                    models.event_participants.c.user_id == current_user.id
+                models.Event.id.in_(
+                    select(models.event_participants.c.event_id).where(
+                        models.event_participants.c.user_id == current_user.id
+                    )
+                )
             )
-        )
-    )
-    
-    result = await db.execute(query)
-    events = result.unique().scalars().all()
+        
+        result = await db.execute(query)
+        events = result.unique().scalars().all()
         print(f"Found {len(events)} events")
         
-    return events
+        return events
     except Exception as e:
         print(f"Error in read_user_events: {str(e)}")
         import traceback

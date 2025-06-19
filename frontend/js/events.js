@@ -1052,7 +1052,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Обновляем список мероприятий при изменении состояния авторизации
 window.addEventListener('authStateChanged', function() {
     loadEvents();
-}); 
+});
 
 // Функция для отображения категорий
 function displayCategories() {
