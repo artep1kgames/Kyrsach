@@ -3,10 +3,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, joinedload
 from typing import List
-from app.database import get_db
-from app.models import models
-from app.schemas import schemas
-from app.utils.auth import get_current_user
+from database import get_db
+from models import models
+from schemas import schemas
+from utils.auth import get_current_user
 
 router = APIRouter(
     prefix="/admin",

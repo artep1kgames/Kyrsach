@@ -4,8 +4,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 from pathlib import Path
-from app.routers import auth, events, users, calendar, admin, event_creation
-from app.routes import categories
+from routers import auth, events, users, calendar, admin, event_creation
+from routes import categories
 from database import engine, Base
 from sqladmin import Admin
 from admin import UserAdmin, EventAdmin, CategoryAdmin

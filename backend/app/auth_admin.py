@@ -1,10 +1,10 @@
 from sqladmin.authentication import AuthenticationBackend
 from fastapi import Request
 from fastapi.responses import RedirectResponse
-from app.utils.auth import verify_token, create_access_token
-from app.models.models import User, UserRole
+from utils.auth import verify_token, create_access_token
+from models.models import User, UserRole
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import engine
+from database import engine
 from sqlalchemy import select
 import logging
 

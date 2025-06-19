@@ -2,8 +2,8 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Table, Boo
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
-from app.database import Base
-from app.utils.password import verify_password
+from database import Base
+from utils.password import verify_password
 
 # Таблица для связи many-to-many между пользователями и мероприятиями
 event_participants = Table(
