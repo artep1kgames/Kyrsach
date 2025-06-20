@@ -43,7 +43,7 @@ const createEventForm = document.getElementById('createEventForm');
 async function loadCategories() {
     try {
         console.log('Loading categories...');
-        const categoriesUrl = getApiUrl('/categories'); // Используем правильный эндпоинт
+        const categoriesUrl = getApiUrl('/api/categories'); // Используем правильный эндпоинт с префиксом
         console.log('Fetching categories from:', categoriesUrl);
         
         const response = await fetch(categoriesUrl, {
@@ -157,7 +157,7 @@ document.getElementById('createEventForm').addEventListener('submit', async func
         let category_ids = [];
         
         // Получаем все категории для поиска ID по названию
-        const categoriesResponse = await fetch('/categories', {
+        const categoriesResponse = await fetch('/api/categories', {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -297,7 +297,7 @@ function showSuccess(message) {
 async function loadEvents() {
     try {
         console.log('Loading events...');
-        const eventsUrl = getApiUrl('/events'); // Используем правильный эндпоинт
+        const eventsUrl = getApiUrl('/api/events'); // Используем правильный эндпоинт с префиксом
         console.log('Fetching events from:', eventsUrl);
         
         const response = await fetch(eventsUrl, {

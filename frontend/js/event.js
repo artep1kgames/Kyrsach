@@ -490,7 +490,7 @@ function deleteEvent(eventId) {
             const currentUser = getCurrentUser();
             let url, options;
             if (currentUser.role === 'admin') {
-                url = getApiUrl(`/admin/events/${eventId}`);
+                url = getApiUrl(`/api/admin/events/${eventId}`);
                 options = {
                     method: 'DELETE',
                     headers: {
@@ -499,7 +499,7 @@ function deleteEvent(eventId) {
                     }
                 };
             } else {
-                url = getApiUrl(`/events/${eventId}`);
+                url = getApiUrl(`/api/events/${eventId}`);
                 options = {
                     method: 'DELETE',
                     headers: getAuthHeaders()

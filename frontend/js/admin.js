@@ -130,7 +130,7 @@ function getRoleDisplay(role) {
 // Загрузка мероприятий
 async function loadEvents() {
     try {
-        const response = await fetch(getApiUrl('/admin/events'), {
+        const response = await fetch(getApiUrl('/api/admin/events'), {
             headers: {
                 ...API_CONFIG.HEADERS,
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -295,7 +295,7 @@ async function approveEvent(eventId) {
     }
 
     try {
-        const response = await fetch(getApiUrl(`/admin/events/${eventId}/approve`), {
+        const response = await fetch(getApiUrl(`/api/admin/events/${eventId}/approve`), {
             method: 'POST',
             headers: {
                 ...API_CONFIG.HEADERS,
@@ -322,7 +322,7 @@ async function rejectEvent(eventId) {
         }
 
     try {
-        const response = await fetch(getApiUrl(`/admin/events/${eventId}/reject`), {
+        const response = await fetch(getApiUrl(`/api/admin/events/${eventId}/reject`), {
             method: 'POST',
             headers: {
                 ...API_CONFIG.HEADERS,
@@ -351,7 +351,7 @@ async function publishEvent(eventId) {
     }
 
     try {
-        const response = await fetch(getApiUrl(`/admin/events/${eventId}/publish`), {
+        const response = await fetch(getApiUrl(`/api/admin/events/${eventId}/publish`), {
             method: 'POST',
             headers: {
                 ...API_CONFIG.HEADERS,
@@ -378,7 +378,7 @@ async function deleteEvent(eventId) {
     }
 
     try {
-        const response = await fetch(getApiUrl(`/admin/events/${eventId}`), {
+        const response = await fetch(getApiUrl(`/api/admin/events/${eventId}`), {
             method: 'DELETE',
             headers: {
                 ...API_CONFIG.HEADERS,
@@ -447,20 +447,21 @@ async function addEvent() {
             return;
         }
 
-        const response = await fetch(getApiUrl('/admin/events'), {
+        const eventData = {
+            title,
+            start_date: date,
+            location,
+            description,
+            event_type: eventType
+        };
+
+        const response = await fetch(getApiUrl('/api/admin/events'), {
             method: 'POST',
             headers: {
                 ...API_CONFIG.HEADERS,
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
-            body: JSON.stringify({
-                title,
-                start_date: date,
-                location,
-                description,
-                event_type: eventType
-            })
+            body: JSON.stringify(eventData)
         });
 
         if (!response.ok) {
@@ -623,9 +624,12 @@ async function saveEventChanges() {
     };
 
     try {
-        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.UPDATE, { id: eventId }), {
+        const response = await fetch(getApiUrl(`/api/admin/events/${eventId}`), {
             method: 'PUT',
-            headers: getAuthHeaders(),
+            headers: {
+                ...API_CONFIG.HEADERS,
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
             body: JSON.stringify(eventData)
         });
 
@@ -645,7 +649,7 @@ async function saveEventChanges() {
 // Просмотр деталей мероприятия
 async function viewEventDetails(eventId) {
     try {
-        const response = await fetch(getApiUrl(`/admin/events/${eventId}`), {
+        const response = await fetch(getApiUrl(`/api/admin/events/${eventId}`), {
             headers: {
                 ...API_CONFIG.HEADERS,
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -730,7 +734,7 @@ async function deletePublishedEvents() {
     }
 
     try {
-        const response = await fetch(getApiUrl('/admin/events/published'), {
+        const response = await fetch(getApiUrl('/api/admin/events/published'), {
             method: 'DELETE',
             headers: {
                 ...API_CONFIG.HEADERS,

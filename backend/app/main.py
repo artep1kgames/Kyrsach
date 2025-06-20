@@ -64,23 +64,23 @@ async def test_categories():
 async def test_events():
     return {"message": "Events endpoint test", "events": ["event1", "event2"]}
 
-# Регистрируем роутеры ПЕРЕД монтированием статических файлов
+# Регистрируем роутеры с префиксом /api для избежания конфликтов
 print("Registering routers...")
-app.include_router(test_router)
+app.include_router(test_router, prefix="/api")
 print("✓ Test router registered")
-app.include_router(auth.router)
+app.include_router(auth.router, prefix="/api")
 print("✓ Auth router registered")
-app.include_router(events.router)
+app.include_router(events.router, prefix="/api")
 print("✓ Events router registered")
-app.include_router(users.router)
+app.include_router(users.router, prefix="/api")
 print("✓ Users router registered")
-app.include_router(calendar.router)
+app.include_router(calendar.router, prefix="/api")
 print("✓ Calendar router registered")
-app.include_router(admin.router)
+app.include_router(admin.router, prefix="/api")
 print("✓ Admin router registered")
-app.include_router(categories.router)
+app.include_router(categories.router, prefix="/api")
 print("✓ Categories router registered")
-app.include_router(event_creation.router)
+app.include_router(event_creation.router, prefix="/api")
 print("✓ Event creation router registered")
 print("All routers registered successfully!")
 
@@ -90,12 +90,12 @@ async def api_test():
     return {
         "message": "API is working",
         "available_endpoints": [
-            "/categories",
-            "/events", 
-            "/direct-categories",
-            "/direct-events",
-            "/auth/token",
-            "/users/me"
+            "/api/categories",
+            "/api/events", 
+            "/api/direct-categories",
+            "/api/direct-events",
+            "/api/auth/token",
+            "/api/users/me"
         ],
         "timestamp": datetime.now().isoformat()
     }
@@ -305,7 +305,7 @@ async def favicon():
     return {"message": "Favicon not found"}
 
 # Прямые эндпоинты для тестирования (без роутеров)
-@app.get("/direct-categories")
+@app.get("/api/direct-categories")
 async def direct_categories():
     try:
         from sqlalchemy.orm import sessionmaker
@@ -331,7 +331,7 @@ async def direct_categories():
     except Exception as e:
         return {"error": str(e), "categories": []}
 
-@app.get("/direct-events")
+@app.get("/api/direct-events")
 async def direct_events():
     try:
         from sqlalchemy.orm import sessionmaker

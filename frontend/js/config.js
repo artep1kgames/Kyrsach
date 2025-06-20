@@ -4,35 +4,35 @@ const API_CONFIG = {
         : '',
     ENDPOINTS: {
         AUTH: {
-            LOGIN: '/auth/token',
-            REGISTER: '/auth/register',
-            PROFILE: '/users/me',
-            LOGOUT: '/auth/logout'
+            LOGIN: '/api/auth/token',
+            REGISTER: '/api/auth/register',
+            PROFILE: '/api/users/me',
+            LOGOUT: '/api/auth/logout'
         },
         EVENTS: {
-            BASE: '/events',
-            DETAIL: '/events/{id}',
-            MODERATION: '/events/moderation',
-            MODERATE: '/events/moderate',
-            CREATE: '/events',
-            UPDATE: '/events/{id}',
-            DELETE: '/events/{id}',
-            JOIN: '/events/{id}/participate',
-            LEAVE: '/events/{id}/participate',
-            PARTICIPATE: '/events/{id}/participate',
-            CANCEL_PARTICIPATION: '/events/{id}/participate'
+            BASE: '/api/events',
+            DETAIL: '/api/events/{id}',
+            MODERATION: '/api/events/moderation',
+            MODERATE: '/api/events/moderate',
+            CREATE: '/api/events',
+            UPDATE: '/api/events/{id}',
+            DELETE: '/api/events/{id}',
+            JOIN: '/api/events/{id}/participate',
+            LEAVE: '/api/events/{id}/participate',
+            PARTICIPATE: '/api/events/{id}/participate',
+            CANCEL_PARTICIPATION: '/api/events/{id}/participate'
         },
         CATEGORIES: {
-            BASE: '/categories',
-            DETAIL: '/categories/{id}',
-            CREATE: '/categories',
-            UPDATE: '/categories/{id}',
-            DELETE: '/categories/{id}'
+            BASE: '/api/categories',
+            DETAIL: '/api/categories/{id}',
+            CREATE: '/api/categories',
+            UPDATE: '/api/categories/{id}',
+            DELETE: '/api/categories/{id}'
         },
         USERS: {
-            BASE: '/users',
-            PROFILE: '/users/me',
-            UPDATE: '/users/update'
+            BASE: '/api/users',
+            PROFILE: '/api/users/me',
+            UPDATE: '/api/users/update'
         }
     },
     HEADERS: {
