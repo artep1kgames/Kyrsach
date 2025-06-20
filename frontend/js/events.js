@@ -842,11 +842,12 @@ async function createEvent(eventData) {
         });
 
         if (!response.ok) {
+            const text = await response.text();
             let errorText = '';
             try {
-                errorText = (await response.json()).detail;
+                errorText = JSON.parse(text).detail;
             } catch {
-                errorText = await response.text();
+                errorText = text;
             }
             throw new Error(errorText || 'Ошибка при создании мероприятия');
         }
