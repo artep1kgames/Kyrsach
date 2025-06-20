@@ -331,12 +331,20 @@ function displayEventDetails(event) {
             actionsDiv.appendChild(cancelButton);
         }
     } else {
-        // Если пользователь не участвует и не является организатором, показываем кнопку участия
-        const participateButton = document.createElement('button');
-        participateButton.className = 'btn btn-primary';
-        participateButton.textContent = event.ticket_price && event.ticket_price > 0 ? 'Купить билет' : 'Я пойду';
-        participateButton.onclick = () => (event.ticket_price && event.ticket_price > 0) ? buyTicket(event.id) : participate(event.id);
-        actionsDiv.appendChild(participateButton);
+        // Если мероприятие полное, показываем надпись "Нет мест"
+        if ((event.current_participants || 0) >= event.max_participants) {
+            const noSeats = document.createElement('div');
+            noSeats.className = 'no-seats-message';
+            noSeats.textContent = 'Нет мест';
+            actionsDiv.appendChild(noSeats);
+        } else {
+            // Если пользователь не участвует и не является организатором, показываем кнопку участия
+            const participateButton = document.createElement('button');
+            participateButton.className = 'btn btn-primary';
+            participateButton.textContent = event.ticket_price && event.ticket_price > 0 ? 'Купить билет' : 'Я пойду';
+            participateButton.onclick = () => (event.ticket_price && event.ticket_price > 0) ? buyTicket(event.id) : participate(event.id);
+            actionsDiv.appendChild(participateButton);
+        }
     }
 }
 
@@ -597,12 +605,20 @@ async function updateEventActions() {
                 actionsDiv.appendChild(cancelButton);
             }
         } else {
-            // Если пользователь не участвует и не является организатором, показываем кнопку участия
-            const participateButton = document.createElement('button');
-            participateButton.className = 'btn btn-primary';
-            participateButton.textContent = event.ticket_price && event.ticket_price > 0 ? 'Купить билет' : 'Я пойду';
-            participateButton.onclick = () => (event.ticket_price && event.ticket_price > 0) ? buyTicket(event.id) : participate(event.id);
-            actionsDiv.appendChild(participateButton);
+            // Если мероприятие полное, показываем надпись "Нет мест"
+            if ((event.current_participants || 0) >= event.max_participants) {
+                const noSeats = document.createElement('div');
+                noSeats.className = 'no-seats-message';
+                noSeats.textContent = 'Нет мест';
+                actionsDiv.appendChild(noSeats);
+            } else {
+                // Если пользователь не участвует и не является организатором, показываем кнопку участия
+                const participateButton = document.createElement('button');
+                participateButton.className = 'btn btn-primary';
+                participateButton.textContent = event.ticket_price && event.ticket_price > 0 ? 'Купить билет' : 'Я пойду';
+                participateButton.onclick = () => (event.ticket_price && event.ticket_price > 0) ? buyTicket(event.id) : participate(event.id);
+                actionsDiv.appendChild(participateButton);
+            }
         }
         
         console.log('Кнопки действий обновлены');
