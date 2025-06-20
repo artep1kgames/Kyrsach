@@ -71,15 +71,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 successCallback(formattedEvents);
             } catch (error) {
                 console.error('Ошибка при загрузке мероприятий:', error);
-                failureCallback(error);
+                
+                // Fallback: используем пустой массив если API недоступен
+                console.log('Using fallback events for calendar...');
+                successCallback([]);
+                
                 // Показываем ошибку пользователю
                 const calendarContainer = document.querySelector('.calendar-container');
                 if (calendarContainer) {
                     const errorDiv = document.createElement('div');
                     errorDiv.className = 'error-message';
-                    errorDiv.textContent = 'Ошибка загрузки мероприятий. Пожалуйста, попробуйте позже.';
+                    errorDiv.innerHTML = `
+                        <div style="text-align: center; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; margin: 10px 0;">
+                            <p>⚠️ Календарь работает в режиме офлайн (API недоступен)</p>
+                            <p><a href="/debug-api.html" target="_blank">Проверить статус API</a></p>
+                        </div>
+                    `;
                     calendarContainer.appendChild(errorDiv);
-                    setTimeout(() => errorDiv.remove(), 5000);
+                    setTimeout(() => errorDiv.remove(), 10000);
                 }
             }
         },

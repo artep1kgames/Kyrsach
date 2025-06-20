@@ -71,10 +71,30 @@ async function loadCategories() {
         displayCategories();
     } catch (error) {
         console.error('Error loading categories:', error);
+        
+        // Fallback: используем статические категории если API недоступен
+        console.log('Using fallback categories...');
+        categories = [
+            {"id": 1, "name": "CONFERENCE", "description": "Конференция"},
+            {"id": 2, "name": "SEMINAR", "description": "Семинар"},
+            {"id": 3, "name": "WORKSHOP", "description": "Мастер-класс"},
+            {"id": 4, "name": "EXHIBITION", "description": "Выставка"},
+            {"id": 5, "name": "CONCERT", "description": "Концерт"},
+            {"id": 6, "name": "FESTIVAL", "description": "Фестиваль"},
+            {"id": 7, "name": "SPORTS", "description": "Спортивное мероприятие"},
+            {"id": 8, "name": "OTHER", "description": "Другое"}
+        ];
+        
+        displayCategories();
+        
         // Показываем сообщение об ошибке пользователю
         const categoriesContainer = document.getElementById('categoriesContainer');
         if (categoriesContainer) {
-            categoriesContainer.innerHTML = '<p class="error-message">Ошибка при загрузке категорий</p>';
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = '<p>⚠️ Используются локальные категории (API недоступен)</p>';
+            categoriesContainer.appendChild(errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
         }
     }
 }
@@ -324,10 +344,32 @@ async function loadEvents() {
         displayEvents();
     } catch (error) {
         console.error('Error loading events:', error);
+        
+        // Fallback: используем пустой массив если API недоступен
+        console.log('Using fallback events...');
+        events = [];
+        
+        displayEvents();
+        
         // Показываем сообщение об ошибке пользователю
         const eventsContainer = document.getElementById('eventsContainer');
         if (eventsContainer) {
-            eventsContainer.innerHTML = '<p class="error-message">Ошибка при загрузке мероприятий</p>';
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <h3>⚠️ API недоступен</h3>
+                    <p>Не удалось загрузить мероприятия с сервера.</p>
+                    <p>Возможные причины:</p>
+                    <ul style="text-align: left; display: inline-block;">
+                        <li>Сервер временно недоступен</li>
+                        <li>Проблемы с сетью</li>
+                        <li>Бэкенд не развернут на хостинге</li>
+                    </ul>
+                    <p><a href="/debug-api.html" target="_blank">Проверить статус API</a></p>
+                </div>
+            `;
+            eventsContainer.appendChild(errorDiv);
         }
     }
 }
