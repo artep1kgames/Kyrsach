@@ -84,6 +84,22 @@ app.include_router(event_creation.router)
 print("✓ Event creation router registered")
 print("All routers registered successfully!")
 
+# Добавляем обработчики для API маршрутов перед монтированием статических файлов
+@app.get("/api-test")
+async def api_test():
+    return {
+        "message": "API is working",
+        "available_endpoints": [
+            "/categories",
+            "/events", 
+            "/direct-categories",
+            "/direct-events",
+            "/auth/token",
+            "/users/me"
+        ],
+        "timestamp": datetime.now().isoformat()
+    }
+
 # Монтируем статические файлы ПОСЛЕ регистрации роутеров
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
@@ -92,17 +108,9 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 FRONTEND_IMAGES_DIR = BASE_DIR.parent / "frontend" / "images"
 app.mount("/frontend/images", StaticFiles(directory=str(FRONTEND_IMAGES_DIR)), name="frontend_images")
 
-# Монтируем фронтенд на отдельный путь, чтобы не мешать API
+# Монтируем фронтенд на корневой путь, но с правильным порядком
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
-app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
-
-# Добавляем обработчик для корневого пути, который будет отдавать index.html
-@app.get("/")
-async def serve_frontend():
-    index_path = FRONTEND_DIR / "index.html"
-    if index_path.exists():
-        return FileResponse(str(index_path))
-    return {"message": "Frontend not found"}
+app.mount("", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 
 # Настройка админ-панели
 admin = Admin(app, engine)
@@ -244,22 +252,6 @@ async def test_routers():
             "direct_categories": "/direct-categories",
             "direct_events": "/direct-events"
         }
-    }
-
-# Эндпоинт для тестирования API маршрутов
-@app.get("/api-test")
-async def api_test():
-    return {
-        "message": "API is working",
-        "available_endpoints": [
-            "/categories",
-            "/events", 
-            "/direct-categories",
-            "/direct-events",
-            "/auth/token",
-            "/users/me"
-        ],
-        "timestamp": datetime.now().isoformat()
     }
 
 # Эндпоинт для просмотра всех зарегистрированных роутов
