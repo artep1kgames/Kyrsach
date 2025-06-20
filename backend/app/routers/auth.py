@@ -5,10 +5,10 @@ from sqlalchemy import select
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from database import get_db
-from models.models import User, UserRole
-from schemas.schemas import UserCreate, UserResponse, Token
-from utils.auth import verify_password, get_password_hash, create_access_token
+from app.database import get_db
+from app.models import models
+from app.schemas import schemas
+from app.utils.auth import get_current_user, create_access_token, get_password_hash, verify_password
 from utils.password import verify_password, get_password_hash
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -52,7 +52,7 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
         print(f"Ошибка декодирования JWT: {e}")
         raise credentials_exception
     
-    result = await db.execute(select(User).filter(User.email == username))
+    result = await db.execute(select(models.User).filter(models.User.email == username))
     user = result.scalar_one_or_none()
     
     if user is None:
@@ -62,10 +62,10 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
     print(f"Пользователь найден: {user.email}")
     return user
 
-@router.post("/register", response_model=UserResponse)
-async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
+@router.post("/register", response_model=schemas.UserResponse)
+async def register(user: schemas.UserCreate, db: AsyncSession = Depends(get_db)):
     # Проверяем, не существует ли уже пользователь с таким email
-    query = select(User).where(User.email == user.email)
+    query = select(models.User).where(models.User.email == user.email)
     result = await db.execute(query)
     db_user = result.scalar_one_or_none()
     
@@ -76,7 +76,7 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
         )
     
     # Проверяем, не существует ли уже пользователь с таким username
-    query = select(User).where(User.username == user.username)
+    query = select(models.User).where(models.User.username == user.username)
     result = await db.execute(query)
     db_user = result.scalar_one_or_none()
     
@@ -91,14 +91,14 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
     
     # Преобразуем строковую роль в значение перечисления
     try:
-        role = UserRole(user.role.value if isinstance(user.role, UserRole) else user.role)
+        role = models.UserRole(user.role.value if isinstance(user.role, models.UserRole) else user.role)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid role: {user.role}. Must be one of: {[r.value for r in UserRole]}"
+            detail=f"Invalid role: {user.role}. Must be one of: {[r.value for r in models.UserRole]}"
         )
     
-    db_user = User(
+    db_user = models.User(
         email=user.email,
         username=user.username,
         full_name=user.full_name,
@@ -110,14 +110,14 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
     await db.refresh(db_user)
     return db_user
 
-@router.post("/token", response_model=Token)
+@router.post("/token", response_model=schemas.Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     print(f"\n=== Попытка входа ===")
     print(f"Email: {form_data.username}")
     
     try:
         # Ищем пользователя по email
-        query = select(User).where(User.email == form_data.username)
+        query = select(models.User).where(models.User.email == form_data.username)
         result = await db.execute(query)
         user = result.scalar_one_or_none()
         
@@ -156,8 +156,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
             detail="Internal server error during authentication"
         )
 
-@router.get("/me", response_model=UserResponse)
-async def read_users_me(request: Request, current_user: User = Depends(get_current_user)):
+@router.get("/me", response_model=schemas.UserResponse)
+async def read_users_me(request: Request, current_user: models.User = Depends(get_current_user)):
     print(f"\n=== Получение профиля пользователя ===")
     print(f"Заголовки запроса: {request.headers}")
     print(f"Текущий пользователь: {current_user.email}")

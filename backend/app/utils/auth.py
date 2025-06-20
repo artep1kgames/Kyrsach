@@ -4,9 +4,9 @@ from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_db
+from app.database import get_db
 from sqlalchemy import select
-from models.models import User
+from app.models.models import User
 from .password import verify_password, get_password_hash
 
 # Настройки JWT
