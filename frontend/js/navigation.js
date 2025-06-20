@@ -49,5 +49,44 @@ function checkAuthAndUpdateNav() {
     }
 }
 
-// Вызываем функцию при загрузке страницы
-document.addEventListener('DOMContentLoaded', checkAuthAndUpdateNav); 
+// Универсальный обработчик logout для всех страниц
+function setupLogoutHandler() {
+    // Поиск по id
+    const logoutBtnById = document.getElementById('logout-button');
+    if (logoutBtnById) {
+        logoutBtnById.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (typeof logout === 'function') {
+                logout();
+            } else if (typeof window.logout === 'function') {
+                window.logout();
+            } else {
+                // fallback: чистим localStorage и редиректим
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = './index.html';
+            }
+        });
+    }
+    // Поиск по классу
+    const logoutBtnByClass = document.querySelector('.logout-btn');
+    if (logoutBtnByClass) {
+        logoutBtnByClass.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (typeof logout === 'function') {
+                logout();
+            } else if (typeof window.logout === 'function') {
+                window.logout();
+            } else {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = './index.html';
+            }
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuthAndUpdateNav();
+    setupLogoutHandler();
+}); 
