@@ -842,8 +842,13 @@ async function createEvent(eventData) {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Ошибка при создании мероприятия');
+            let errorText = '';
+            try {
+                errorText = (await response.json()).detail;
+            } catch {
+                errorText = await response.text();
+            }
+            throw new Error(errorText || 'Ошибка при создании мероприятия');
         }
 
         const event = await response.json();
