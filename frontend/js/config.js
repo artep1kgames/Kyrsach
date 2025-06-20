@@ -6,10 +6,10 @@ const API_CONFIG = {
         : '',
     ENDPOINTS: {
         AUTH: {
-            LOGIN: '/api/auth/token',
-            REGISTER: '/api/auth/register',
-            PROFILE: '/api/users/me',
-            LOGOUT: '/api/auth/logout'
+            LOGIN: '/api/token',
+            REGISTER: '/api/register',
+            PROFILE: '/api/me',
+            LOGOUT: '/api/logout'
         },
         EVENTS: {
             BASE: '/api/events',
@@ -33,7 +33,7 @@ const API_CONFIG = {
         },
         USERS: {
             BASE: '/api/users',
-            PROFILE: '/api/users/me',
+            PROFILE: '/api/me',
             UPDATE: '/api/users/update'
         }
     },
