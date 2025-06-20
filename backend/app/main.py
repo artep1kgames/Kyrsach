@@ -156,49 +156,19 @@ async def direct_events():
     except Exception as e:
         return {"error": str(e), "events": []}
 
-# Монтируем статические файлы ПОСЛЕ регистрации роутеров
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
-
-# Монтируем изображения фронтенда для обратной совместимости
-FRONTEND_IMAGES_DIR = BASE_DIR.parent / "frontend" / "images"
-app.mount("/frontend/images", StaticFiles(directory=str(FRONTEND_IMAGES_DIR)), name="frontend_images")
-
-# Монтируем фронтенд на путь /frontend/ чтобы не конфликтовать с админ-панелью
-FRONTEND_DIR = BASE_DIR.parent / "frontend"
-app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
-
-# Настройка админ-панели ПОСЛЕ монтирования фронтенда
+# Настройка админ-панели
 admin = Admin(app, engine)
 admin.add_view(UserAdmin)
 admin.add_view(EventAdmin)
 admin.add_view(CategoryAdmin)
 
-# Обработчик корневого пути для перенаправления на фронтенд
-@app.get("/")
-async def root():
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
+# Монтируем статические файлы ПОСЛЕ регистрации роутеров и админки
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
-# Обработчики для основных страниц фронтенда
-@app.get("/index.html")
-async def index():
-    return FileResponse(str(FRONTEND_DIR / "index.html"))
-
-@app.get("/events.html")
-async def events():
-    return FileResponse(str(FRONTEND_DIR / "events.html"))
-
-@app.get("/event.html")
-async def event():
-    return FileResponse(str(FRONTEND_DIR / "event.html"))
-
-@app.get("/calendar.html")
-async def calendar():
-    return FileResponse(str(FRONTEND_DIR / "calendar.html"))
-
-@app.get("/profile.html")
-async def profile():
-    return FileResponse(str(FRONTEND_DIR / "profile.html"))
+# Монтируем фронтенд на корневой путь
+FRONTEND_DIR = BASE_DIR.parent / "frontend"
+app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 
 @app.on_event("startup")
 async def startup():
