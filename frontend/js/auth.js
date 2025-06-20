@@ -346,8 +346,8 @@ function createModals() {
                     <div class="form-group">
                         <label for="registerRole">Роль:</label>
                         <select id="registerRole" required>
-                            <option value="ORGANIZER">Организатор</option>
-                            <option value="VISITOR">Посетитель</option>
+                            <option value="organizer">Организатор</option>
+                            <option value="visitor">Посетитель</option>
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
