@@ -290,57 +290,34 @@ function showSuccess(message) {
 
 // Функции для работы с мероприятиями
 async function approveEvent(eventId) {
-    if (!confirm('Вы уверены, что хотите одобрить это мероприятие?')) {
-        return;
-    }
-
     try {
-        const response = await fetch(getApiUrl(`/api/admin/events/${eventId}/approve`), {
+        const response = await fetch(`/api/admin/events/${eventId}/approve`, {
             method: 'POST',
-            headers: {
-                ...API_CONFIG.HEADERS,
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+            headers: getAuthHeaders()
         });
-
-        if (!response.ok) {
-            throw new Error('Ошибка при одобрении мероприятия');
-        }
-
-        showSuccess('Мероприятие успешно одобрено');
+        if (!response.ok) throw new Error('Ошибка при одобрении мероприятия');
+        showSuccess('Мероприятие одобрено');
         await loadEvents();
     } catch (error) {
-        console.error('Ошибка при одобрении мероприятия:', error);
-        showError('Не удалось одобрить мероприятие');
+        console.error(error);
+        showError(error.message);
     }
 }
 
 async function rejectEvent(eventId) {
-    const reason = prompt('Укажите причину отклонения:');
-    if (!reason) {
-            return;
-        }
-
     try {
-        const response = await fetch(getApiUrl(`/api/admin/events/${eventId}/reject`), {
+        const reason = prompt('Укажите причину отклонения:');
+        if (!reason) return;
+        const response = await fetch(`/api/admin/events/${eventId}/reject?reason=${encodeURIComponent(reason)}`, {
             method: 'POST',
-            headers: {
-                ...API_CONFIG.HEADERS,
-                'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ reason })
+            headers: getAuthHeaders()
         });
-
-        if (!response.ok) {
-            throw new Error('Ошибка при отклонении мероприятия');
-        }
-
-        showSuccess('Мероприятие успешно отклонено');
+        if (!response.ok) throw new Error('Ошибка при отклонении мероприятия');
+        showSuccess('Мероприятие отклонено');
         await loadEvents();
     } catch (error) {
-        console.error('Ошибка при отклонении мероприятия:', error);
-        showError('Не удалось отклонить мероприятие');
+        console.error(error);
+        showError(error.message);
     }
 }
 
@@ -649,17 +626,10 @@ async function saveEventChanges() {
 // Просмотр деталей мероприятия
 async function viewEventDetails(eventId) {
     try {
-        const response = await fetch(getApiUrl(`/api/admin/events/${eventId}`), {
-            headers: {
-                ...API_CONFIG.HEADERS,
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+        const response = await fetch(`/api/admin/events/${eventId}`, {
+            headers: getAuthHeaders()
         });
-
-        if (!response.ok) {
-            throw new Error('Ошибка при загрузке данных мероприятия');
-        }
-
+        if (!response.ok) throw new Error('Ошибка при загрузке мероприятия');
         const event = await response.json();
         console.log('Полученные данные мероприятия:', event); // Для отладки
 
@@ -714,8 +684,8 @@ async function viewEventDetails(eventId) {
 
         modal.style.display = 'block';
     } catch (error) {
-        console.error('Ошибка при загрузке данных мероприятия:', error);
-        showError('Не удалось загрузить данные мероприятия');
+        console.error(error);
+        showError(error.message);
     }
 }
 

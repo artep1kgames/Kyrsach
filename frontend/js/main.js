@@ -182,6 +182,26 @@ function logout() {
     window.location.reload();
 }
 
+// Универсальный обработчик logout для всех страниц
+function setupLogoutHandler() {
+    // Поиск по id
+    const logoutBtnById = document.getElementById('logout-button');
+    if (logoutBtnById) {
+        logoutBtnById.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
+        });
+    }
+    // Поиск по классу
+    const logoutBtnByClass = document.querySelector('.logout-btn');
+    if (logoutBtnByClass) {
+        logoutBtnByClass.addEventListener('click', function(e) {
+            e.preventDefault();
+            logout();
+        });
+    }
+}
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Страница загружена, инициализация...');
@@ -196,4 +216,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (document.getElementById('eventsContainer')) {
         loadEvents();
     }
+
+    setupLogoutHandler();
 }); 
