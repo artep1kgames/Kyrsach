@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import List
@@ -13,15 +13,14 @@ router = APIRouter(
 
 @router.get("/")
 async def read_categories(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    skip: int = 0,
+    limit: int = 100,
     db: AsyncSession = Depends(get_db)
 ):
     """Эндпоинт для получения категорий из базы данных"""
     try:
         print("Starting read_categories function")
         print(f"Parameters: skip={skip}, limit={limit}")
-        
         query = select(models.Category).offset(skip).limit(limit)
         print(f"Query: {query}")
         
@@ -34,15 +33,11 @@ async def read_categories(
         # Преобразуем в список словарей
         categories_list = []
         for category in categories:
-            try:
-                categories_list.append({
-                    "id": category.id,
-                    "name": category.name,
-                    "description": category.description
-                })
-            except Exception as e:
-                print(f"Error processing category {category.id}: {e}")
-                continue
+            categories_list.append({
+                "id": category.id,
+                "name": category.name,
+                "description": category.description
+            })
         
         print(f"Categories: {categories_list}")
         return categories_list

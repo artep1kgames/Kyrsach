@@ -106,8 +106,8 @@ async def upload_event_image(
 
 @router.get("/")
 async def get_events(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    skip: int = 0,
+    limit: int = 100,
     search: Optional[str] = None,
     start_date: Optional[str] = Query(None, description="Start date in ISO format"),
     end_date: Optional[str] = Query(None, description="End date in ISO format"),
@@ -139,27 +139,19 @@ async def get_events(
         
         if start_date:
             try:
-                # Обрабатываем разные форматы даты
-                if 'Z' in start_date:
-                    start_date = start_date.replace('Z', '+00:00')
-                start_datetime = datetime.fromisoformat(start_date)
+                start_datetime = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
                 query = query.where(models.Event.end_date >= start_datetime)
                 print(f"Filtering by start_date: {start_datetime}")
             except ValueError as e:
                 print(f"Invalid start_date format: {start_date}, error: {e}")
-                # Не прерываем выполнение при ошибке формата даты
         
         if end_date:
             try:
-                # Обрабатываем разные форматы даты
-                if 'Z' in end_date:
-                    end_date = end_date.replace('Z', '+00:00')
-                end_datetime = datetime.fromisoformat(end_date)
+                end_datetime = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
                 query = query.where(models.Event.start_date <= end_datetime)
                 print(f"Filtering by end_date: {end_datetime}")
             except ValueError as e:
                 print(f"Invalid end_date format: {end_date}, error: {e}")
-                # Не прерываем выполнение при ошибке формата даты
         
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)
@@ -170,62 +162,57 @@ async def get_events(
         # Преобразуем в список словарей для избежания проблем с сериализацией
         events_list = []
         for event in events:
-            try:
-                # Получаем участников для каждого мероприятия
-                participants_query = select(models.event_participants).where(
-                    models.event_participants.c.event_id == event.id
-                )
-                participants_result = await db.execute(participants_query)
-                participants = participants_result.fetchall()
-                
-                event_dict = {
-                    "id": event.id,
-                    "title": event.title,
-                    "short_description": event.short_description,
-                    "full_description": event.full_description,
-                    "location": event.location,
-                    "start_date": event.start_date.isoformat() if event.start_date else None,
-                    "end_date": event.end_date.isoformat() if event.end_date else None,
-                    "max_participants": event.max_participants,
-                    "current_participants": event.current_participants,
-                    "status": event.status.value if event.status else None,
-                    "event_type": event.event_type.value if event.event_type else None,
-                    "ticket_price": event.ticket_price,
-                    "image_url": event.image_url,
-                    "organizer_id": event.organizer_id,
-                    "organizer": {
-                        "id": event.organizer.id,
-                        "username": event.organizer.username,
-                        "email": event.organizer.email,
-                        "full_name": event.organizer.full_name
-                    } if event.organizer else None,
-                    "categories": [
-                        {
-                            "id": cat.id,
-                            "name": cat.name,
-                            "description": cat.description
-                        } for cat in event.categories
-                    ] if event.categories else [],
-                    "images": [
-                        {
-                            "id": img.id,
-                            "image_url": img.image_url,
-                            "created_at": img.created_at.isoformat() if img.created_at else None
-                        } for img in event.images
-                    ] if event.images else [],
-                    "participants": [
-                        {
-                            "user_id": p.user_id,
-                            "event_id": p.event_id,
-                            "ticket_purchased": p.ticket_purchased
-                        } for p in participants
-                    ] if participants else []
-                }
-                events_list.append(event_dict)
-            except Exception as e:
-                print(f"Error processing event {event.id}: {e}")
-                # Продолжаем обработку других событий
-                continue
+            # Получаем участников для каждого мероприятия
+            participants_query = select(models.event_participants).where(
+                models.event_participants.c.event_id == event.id
+            )
+            participants_result = await db.execute(participants_query)
+            participants = participants_result.fetchall()
+            
+            event_dict = {
+                "id": event.id,
+                "title": event.title,
+                "short_description": event.short_description,
+                "full_description": event.full_description,
+                "location": event.location,
+                "start_date": event.start_date.isoformat() if event.start_date else None,
+                "end_date": event.end_date.isoformat() if event.end_date else None,
+                "max_participants": event.max_participants,
+                "current_participants": event.current_participants,
+                "status": event.status.value if event.status else None,
+                "event_type": event.event_type.value if event.event_type else None,
+                "ticket_price": event.ticket_price,
+                "image_url": event.image_url,
+                "organizer_id": event.organizer_id,
+                "organizer": {
+                    "id": event.organizer.id,
+                    "username": event.organizer.username,
+                    "email": event.organizer.email,
+                    "full_name": event.organizer.full_name
+                } if event.organizer else None,
+                "categories": [
+                    {
+                        "id": cat.id,
+                        "name": cat.name,
+                        "description": cat.description
+                    } for cat in event.categories
+                ] if event.categories else [],
+                "images": [
+                    {
+                        "id": img.id,
+                        "image_url": img.image_url,
+                        "created_at": img.created_at.isoformat() if img.created_at else None
+                    } for img in event.images
+                ] if event.images else [],
+                "participants": [
+                    {
+                        "user_id": p.user_id,
+                        "event_id": p.event_id,
+                        "ticket_purchased": p.ticket_purchased
+                    } for p in participants
+                ] if participants else []
+            }
+            events_list.append(event_dict)
         
         print(f"Returning {len(events_list)} events")
         return events_list
@@ -234,8 +221,10 @@ async def get_events(
         print(f"Error in get_events: {e}")
         import traceback
         traceback.print_exc()
-        # Возвращаем пустой список вместо ошибки
-        return []
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
 
 @router.get("/my", response_model=List[schemas.EventResponse])
 async def get_my_events(
@@ -259,12 +248,6 @@ async def get_event(
 ):
     try:
         print(f"Получен запрос на детали мероприятия с ID: {event_id}")
-        
-        if not isinstance(event_id, int) or event_id <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid event ID"
-            )
         
         query = select(models.Event).where(
             models.Event.id == event_id
