@@ -12,7 +12,7 @@ const API_CONFIG = {
             LOGOUT: '/api/logout'
         },
         EVENTS: {
-            BASE: '/api/events',
+            BASE: '/api/events/',
             DETAIL: '/api/events/{id}',
             MODERATION: '/api/events/moderation',
             MODERATE: '/api/events/moderate',
@@ -25,7 +25,7 @@ const API_CONFIG = {
             CANCEL_PARTICIPATION: '/api/events/{id}/participate'
         },
         CATEGORIES: {
-            BASE: '/api/categories',
+            BASE: '/api/categories/',
             DETAIL: '/api/categories/{id}',
             CREATE: '/api/categories',
             UPDATE: '/api/categories/{id}',
