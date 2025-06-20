@@ -400,12 +400,6 @@ function displayEvents() {
     }
     
     const eventsHTML = approvedEvents.map(event => {
-        console.log('Rendering event:', event); // Логируем объект мероприятия
-        const startDate = new Date(event.start_date);
-        const formattedDate = startDate.toLocaleString('ru-RU', {
-            day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-
         // Исправляем вложенность категорий
         let categories = event.categories;
         if (Array.isArray(categories) && categories.length === 1 && Array.isArray(categories[0])) {
@@ -417,18 +411,38 @@ function displayEvents() {
             categoryTags = categories.map(cat => `<span class="category-tag">${getCategoryDisplay(cat)}</span>`).join('');
         }
 
-        // Тип оплаты
-        const paymentType = event.ticket_price && event.ticket_price > 0 ? 'Платно' : 'Бесплатно';
-        // Статус модерации
+        const startDate = new Date(event.start_date);
+        const formattedDate = startDate.toLocaleString('ru-RU', {
+            day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        // Оплата
+        const paymentType = event.ticket_price && event.ticket_price > 0 ? 'PAID' : 'FREE';
+        const paymentTypeDisplay = getPaymentTypeDisplay(paymentType);
+        const paymentClass = paymentType === 'PAID' ? 'payment-paid' : 'payment-free';
+
+        // Статус
+        const statusClass = `status-${event.status && event.status.toLowerCase()}`;
         const statusDisplay = {
-            'pending': 'На модерации',
-            'approved': 'Одобрено',
-            'rejected': 'Отклонено',
-            'published': 'Опубликовано'
-        }[(event.status || '').toLowerCase()] || event.status;
+            'PENDING': 'На модерации',
+            'APPROVED': 'Одобрено',
+            'REJECTED': 'Отклонено',
+            'PUBLISHED': 'Опубликовано'
+        }[event.status && event.status.toUpperCase()] || event.status;
+
+        // Участие
+        const currentUser = getCurrentUser();
+        const isParticipating = event.participants && currentUser && event.participants.some(p => p.user_id === currentUser.id);
+        const isOrganizer = currentUser && event.organizer_id === currentUser.id;
+        let participationStatus = '';
+        if (isOrganizer) {
+            participationStatus = '<span class="participation-badge organizer"><i class="fas fa-crown"></i> Организатор</span>';
+        } else if (isParticipating) {
+            participationStatus = '<span class="participation-badge participant"><i class="fas fa-check-circle"></i> Участвую</span>';
+        }
 
         return `
-            <div class="event-card" data-event-id="${event.id}">
+            <div class="event-card">
                 <div class="event-image">
                     <img src="${event.image_url || '/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/images/notification-icon.svg'">
                 </div>
@@ -438,8 +452,9 @@ function displayEvents() {
                         <i class="fas fa-calendar"></i>
                         ${formattedDate}
                     </p>
-                    <p class="event-description">${event.short_description}</p>
+                    <p class="event-description">${event.short_description || event.description}</p>
                     ${categoryTags ? `<div class="categories-list">${categoryTags}</div>` : ''}
+                    ${participationStatus ? `<div class="participation-status">${participationStatus}</div>` : ''}
                     <div class="event-footer">
                         <div class="event-meta">
                             <span class="event-location">
@@ -450,13 +465,13 @@ function displayEvents() {
                                 <i class="fas fa-users"></i>
                                 ${event.current_participants || 0}/${event.max_participants}
                             </span>
-                            <span class="event-payment">
-                                <i class="fas ${paymentType === 'Платно' ? 'fa-ticket-alt' : 'fa-gift'}"></i>
-                                ${paymentType}
-                                ${paymentType === 'Платно' && event.ticket_price ? ` (${event.ticket_price} ₽)` : ''}
+                            <span class="event-payment ${paymentClass}">
+                                <i class="fas ${paymentType === 'PAID' ? 'fa-ticket-alt' : 'fa-gift'}"></i>
+                                ${paymentTypeDisplay}
+                                ${paymentType === 'PAID' && event.ticket_price ? ` (${event.ticket_price} ₽)` : ''}
                             </span>
                         </div>
-                        <div class="event-status">${statusDisplay}</div>
+                        <div class="event-status ${statusClass}">${statusDisplay}</div>
                     </div>
                     <div class="event-actions">
                         <a href="event.html?id=${event.id}" class="btn btn-primary"><i class="fas fa-eye"></i> Подробнее</a>
