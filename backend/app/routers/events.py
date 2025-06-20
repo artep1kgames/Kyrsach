@@ -72,7 +72,28 @@ async def create_event(
     await db.commit()
     await db.refresh(db_event)
 
-    # Собираем словарь для возврата (аналогично get_events)
+    # Явно загружаем связанные объекты
+    categories = []
+    if db_event.id:
+        result = await db.execute(
+            select(models.Category).join(models.event_categories).where(models.event_categories.c.event_id == db_event.id)
+        )
+        categories = result.scalars().all()
+
+    images = []
+    if db_event.id:
+        result = await db.execute(
+            select(models.EventImage).where(models.EventImage.event_id == db_event.id)
+        )
+        images = result.scalars().all()
+
+    organizer = None
+    if db_event.organizer_id:
+        result = await db.execute(
+            select(models.User).where(models.User.id == db_event.organizer_id)
+        )
+        organizer = result.scalar_one_or_none()
+
     event_dict = {
         "id": db_event.id,
         "title": db_event.title,
@@ -89,25 +110,25 @@ async def create_event(
         "image_url": db_event.image_url,
         "organizer_id": db_event.organizer_id,
         "organizer": {
-            "id": db_event.organizer.id,
-            "username": db_event.organizer.username,
-            "email": db_event.organizer.email,
-            "full_name": db_event.organizer.full_name
-        } if db_event.organizer else None,
+            "id": organizer.id,
+            "username": organizer.username,
+            "email": organizer.email,
+            "full_name": organizer.full_name
+        } if organizer else None,
         "categories": [
             {
                 "id": cat.id,
                 "name": cat.name,
                 "description": cat.description
-            } for cat in db_event.categories
-        ] if db_event.categories else [],
+            } for cat in categories
+        ] if categories else [],
         "images": [
             {
                 "id": img.id,
                 "image_url": img.image_url,
                 "created_at": img.created_at.isoformat() if img.created_at else None
-            } for img in db_event.images
-        ] if db_event.images else [],
+            } for img in images
+        ] if images else [],
         "participants": []
     }
     return event_dict
