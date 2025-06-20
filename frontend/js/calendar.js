@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const startDate = new Date(info.startStr).toISOString();
                 const endDate = new Date(info.endStr).toISOString();
                 
-                const response = await fetch(`${API_CONFIG.BASE_URL}/events/?start_date=${startDate}&end_date=${endDate}`, {
+                const response = await fetch(`${API_CONFIG.BASE_URL}/api/events/?start_date=${startDate}&end_date=${endDate}`, {
                     headers: {
                         ...API_CONFIG.HEADERS,
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
