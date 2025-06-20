@@ -441,8 +441,11 @@ function displayEvents() {
             participationStatus = '<span class="participation-badge participant"><i class="fas fa-check-circle"></i> Участвую</span>';
         }
 
+        // Для фильтрации по категориям (используем коды)
+        const categoryCodes = Array.isArray(categories) ? categories.map(cat => cat.name) : [];
+
         return `
-            <div class="event-card">
+            <div class="event-card" data-categories='${JSON.stringify(categoryCodes)}'>
                 <div class="event-image">
                     <img src="${event.image_url || '/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/images/notification-icon.svg'">
                 </div>
