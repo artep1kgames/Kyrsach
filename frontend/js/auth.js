@@ -343,6 +343,13 @@ function createModals() {
                         <label for="registerPassword">Пароль:</label>
                         <input type="password" id="registerPassword" required>
                     </div>
+                    <div class="form-group">
+                        <label for="registerRole">Роль:</label>
+                        <select id="registerRole" required>
+                            <option value="ORGANIZER">Организатор</option>
+                            <option value="VISITOR">Посетитель</option>
+                        </select>
+                    </div>
                     <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
                 </form>
                 <p>Уже есть аккаунт? <a href="#" class="switch-to-login">Войти</a></p>
@@ -477,13 +484,15 @@ function initializeForms() {
             const usernameInput = document.getElementById('registerUsername');
             const emailInput = document.getElementById('registerEmail');
             const passwordInput = document.getElementById('registerPassword');
+            const roleInput = document.getElementById('registerRole');
             
             // Проверяем существование всех элементов
-            if (!usernameInput || !emailInput || !passwordInput) {
+            if (!usernameInput || !emailInput || !passwordInput || !roleInput) {
                 console.error('Не найдены элементы формы:', {
                     username: !!usernameInput,
                     email: !!emailInput,
-                    password: !!passwordInput
+                    password: !!passwordInput,
+                    role: !!roleInput
                 });
                 showAuthError('Ошибка формы: не найдены необходимые поля');
                 return;
@@ -492,24 +501,19 @@ function initializeForms() {
             const username = usernameInput.value.trim();
             const email = emailInput.value.trim();
             const password = passwordInput.value;
+            const role = roleInput.value;
             
-            console.log('Данные формы:', { username, email });
+            console.log('Данные формы:', { username, email, role });
             
-            if (!username || !email || !password) {
+            if (!username || !email || !password || !role) {
                 showAuthError('Пожалуйста, заполните все поля');
                 return;
             }
             
             try {
-                await register(email, password, username);
-                const registerModal = document.getElementById('registerModal');
-                if (registerModal) {
-                    registerModal.style.display = 'none';
-                }
-                registerForm.reset();
-            } catch (error) {
-                console.error('Ошибка при регистрации:', error);
-                // Ошибка уже обработана в функции register
+                await register(email, password, username, role);
+            } catch (err) {
+                showAuthError(err.message);
             }
         };
     } else {
@@ -597,7 +601,7 @@ async function handleLogin(e) {
 }
 
 // Функция для регистрации пользователя
-async function register(email, password, username) {
+async function register(email, password, username, role) {
     try {
         console.log('Начало процесса регистрации');
         showLoading();
@@ -608,7 +612,7 @@ async function register(email, password, username) {
             username: username,
             password: password,
             full_name: username, // Используем username как full_name
-            role: 'visitor' // Преобразуем роль в нижний регистр для соответствия enum
+            role: role // Передаём выбранную роль
         };
         
         console.log('Отправка данных для регистрации:', { 
