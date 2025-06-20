@@ -758,9 +758,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadEvents();
     setupSearch();
     setupFilters();
-
-    // Универсальный обработчик logout для всех страниц
-    setupLogoutHandler();
 });
 
 function handlePaidEventChange() {
