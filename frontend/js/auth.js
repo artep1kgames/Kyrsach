@@ -773,7 +773,7 @@ async function login(email, password) {
         console.log('Начало процесса входа');
         showLoading();
         
-        const response = await fetch(`${API_URL}/auth/token`, {
+        const response = await fetch(getApiUrl('/api/auth/token'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
