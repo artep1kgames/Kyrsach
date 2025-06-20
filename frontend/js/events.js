@@ -384,127 +384,61 @@ async function loadEvents() {
 }
 
 // Функция для отображения списка мероприятий
-function displayEvents(events) {
-    const container = document.getElementById('eventsContainer');
-    if (!container) return;
-
-    container.innerHTML = '';
-
-    events.forEach(event => {
-        console.log(`Processing event: ${event.title}`, {
-            eventCategories: event.categories,
-            categoriesType: typeof event.categories,
-            categoriesLength: event.categories ? event.categories.length : 'undefined'
-        });
-        
-        // Проверяем, что categories — это массив
-        let categoryNames = 'Без категории';
-        let categoryTags = '';
-        if (Array.isArray(event.categories) && event.categories.length > 0) {
-            categoryNames = event.categories
-                .map(cat => getCategoryDisplay(cat))
-                .join(', ');
-            
-            // Создаем теги категорий
-            categoryTags = event.categories
-                .map(cat => `<span class="category-tag">${getCategoryDisplay(cat)}</span>`)
-                .join('');
-        }
-
-        const eventCard = document.createElement('div');
-        eventCard.className = 'event-card';
-        eventCard.dataset.type = event.event_type;
-        
-        // Сохраняем категории для фильтрации (используем коды для фильтрации)
-        const categories = Array.isArray(event.categories) ? event.categories.map(cat => cat.name) : [];
-        eventCard.dataset.categories = JSON.stringify(categories);
-        
+function displayEvents() {
+    if (!events) return;
+    
+    // Фильтруем только одобренные мероприятия (без учета регистра)
+    const approvedEvents = events.filter(event => (event.status || '').toLowerCase() === 'approved');
+    console.log('Approved events:', approvedEvents);
+    
+    const eventsContainer = document.getElementById('eventsContainer');
+    if (!eventsContainer) return;
+    
+    if (approvedEvents.length === 0) {
+        eventsContainer.innerHTML = '<p class="no-events">Нет доступных мероприятий</p>';
+        return;
+    }
+    
+    const eventsHTML = approvedEvents.map(event => {
+        console.log('Rendering event:', event); // Логируем объект мероприятия
         const startDate = new Date(event.start_date);
         const formattedDate = startDate.toLocaleString('ru-RU', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
         });
-
-        // Определяем тип оплаты
-        const paymentType = event.ticket_price && event.ticket_price > 0 ? 'PAID' : 'FREE';
-        const paymentTypeDisplay = getPaymentTypeDisplay(paymentType);
-        const paymentClass = paymentType === 'PAID' ? 'payment-paid' : 'payment-free';
-
-        // Определяем статус мероприятия
-        const statusClass = `status-${event.status.toLowerCase()}`;
-        const statusDisplay = {
-            'PENDING': 'На модерации',
-            'APPROVED': 'Одобрено',
-            'REJECTED': 'Отклонено',
-            'PUBLISHED': 'Опубликовано'
-        }[event.status] || event.status;
-
-        // Определяем статус участия пользователя
-        const currentUser = getCurrentUser();
-        const isParticipating = event.participants && event.participants.some(p => p.user_id === currentUser.id);
-        const isOrganizer = event.organizer_id === currentUser.id;
         
-        let participationStatus = '';
-        if (isOrganizer) {
-            participationStatus = '<span class="participation-badge organizer"><i class="fas fa-crown"></i> Организатор</span>';
-        } else if (isParticipating) {
-            participationStatus = '<span class="participation-badge participant"><i class="fas fa-check-circle"></i> Участвую</span>';
-        }
-
-        eventCard.innerHTML = `
-            <div class="event-image">
-                <img src="${event.image_url || '/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/images/notification-icon.svg'">
-            </div>
-            <div class="event-content">
-                <h3>${event.title}</h3>
-                <p class="event-date">
-                    <i class="fas fa-calendar"></i>
-                    ${formattedDate}
-                </p>
-                <p class="event-description">${event.short_description || event.description}</p>
-                ${categoryTags ? `<div class="categories-list">${categoryTags}</div>` : ''}
-                ${participationStatus ? `<div class="participation-status">${participationStatus}</div>` : ''}
-                <div class="event-footer">
-                    <div class="event-meta">
-                        <span class="event-location">
-                            <i class="fas fa-map-marker-alt"></i>
-                            ${event.location}
-                        </span>
-                        <span class="event-participants">
-                            <i class="fas fa-users"></i>
-                            ${event.current_participants || 0}/${event.max_participants}
-                        </span>
-                        <span class="event-payment ${paymentClass}">
-                            <i class="fas ${paymentType === 'PAID' ? 'fa-ticket-alt' : 'fa-gift'}"></i>
-                            ${paymentTypeDisplay}
-                            ${paymentType === 'PAID' && event.ticket_price ? ` (${event.ticket_price} ₽)` : ''}
-                        </span>
-                    </div>
-                    <div class="event-status ${statusClass}">${statusDisplay}</div>
+        return `
+            <div class="event-card" data-event-id="${event.id}">
+                <div class="event-image">
+                    <img src="${event.image_url || '/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/images/notification-icon.svg'">
                 </div>
-                <div class="event-actions">
-                    <button class="btn btn-primary" onclick="viewEvent(${event.id})">
-                        <i class="fas fa-eye"></i> Подробнее
-                    </button>
-                    ${event.status === 'APPROVED' && !isParticipating && !isOrganizer ? `
-                        <button class="btn btn-secondary" onclick="registerForEvent(${event.id})">
-                            <i class="fas fa-user-plus"></i> Зарегистрироваться
-                        </button>
-                    ` : ''}
-                    ${event.status === 'APPROVED' && isParticipating && !isOrganizer ? `
-                        <button class="btn btn-warning btn-small" onclick="cancelEventParticipation(${event.id})">
-                            <i class="fas fa-user-minus"></i> Отменить участие
-                        </button>
-                    ` : ''}
+                <div class="event-content">
+                    <h3>${event.title}</h3>
+                    <p class="event-date">
+                        <i class="fas fa-calendar"></i>
+                        ${formattedDate}
+                    </p>
+                    <p class="event-description">${event.short_description}</p>
+                    <div class="event-footer">
+                        <div class="event-meta">
+                            <span class="event-location">
+                                <i class="fas fa-map-marker-alt"></i>
+                                ${event.location}
+                            </span>
+                            <span class="event-participants">
+                                <i class="fas fa-users"></i>
+                                ${event.current_participants || 0}/${event.max_participants}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="event-actions">
+                        <a href="event.html?id=${event.id}" class="btn btn-primary"><i class="fas fa-eye"></i> Подробнее</a>
+                    </div>
                 </div>
             </div>
         `;
-        
-        container.appendChild(eventCard);
-    });
+    }).join('');
+    
+    eventsContainer.innerHTML = eventsHTML;
 }
 
 // Функция для получения отображаемого названия типа мероприятия
@@ -1116,61 +1050,4 @@ function displayCategories() {
         
         categoryFilter.innerHTML = '<option value="">Все категории</option>' + options.join('');
     }
-}
-
-// Функция для отображения мероприятий
-function displayEvents() {
-    if (!events) return;
-    
-    // Фильтруем только одобренные мероприятия
-    const approvedEvents = events.filter(event => event.status === 'approved');
-    console.log('Approved events:', approvedEvents);
-    
-    const eventsContainer = document.getElementById('eventsContainer');
-    if (!eventsContainer) return;
-    
-    if (approvedEvents.length === 0) {
-        eventsContainer.innerHTML = '<p class="no-events">Нет доступных мероприятий</p>';
-        return;
-    }
-    
-    const eventsHTML = approvedEvents.map(event => {
-        const startDate = new Date(event.start_date);
-        const formattedDate = startDate.toLocaleString('ru-RU', {
-            day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-        
-        return `
-            <div class="event-card" data-event-id="${event.id}">
-                <div class="event-image">
-                    <img src="${event.image_url || '/images/notification-icon.svg'}" alt="${event.title}" onerror="this.src='/images/notification-icon.svg'">
-                </div>
-                <div class="event-content">
-                    <h3>${event.title}</h3>
-                    <p class="event-date">
-                        <i class="fas fa-calendar"></i>
-                        ${formattedDate}
-                    </p>
-                    <p class="event-description">${event.short_description}</p>
-                    <div class="event-footer">
-                        <div class="event-meta">
-                            <span class="event-location">
-                                <i class="fas fa-map-marker-alt"></i>
-                                ${event.location}
-                            </span>
-                            <span class="event-participants">
-                                <i class="fas fa-users"></i>
-                                ${event.current_participants || 0}/${event.max_participants}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="event-actions">
-                        <a href="event.html?id=${event.id}" class="btn btn-primary"><i class="fas fa-eye"></i> Подробнее</a>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    eventsContainer.innerHTML = eventsHTML;
 } 
