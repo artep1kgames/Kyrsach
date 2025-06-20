@@ -43,7 +43,7 @@ const createEventForm = document.getElementById('createEventForm');
 async function loadCategories() {
     try {
         console.log('Loading categories...');
-        const categoriesUrl = getApiUrl('/api/categories'); // Используем правильный эндпоинт с префиксом
+        const categoriesUrl = getApiUrl(API_CONFIG.ENDPOINTS.CATEGORIES.BASE); // Используем константу
         console.log('Fetching categories from:', categoriesUrl);
         
         const response = await fetch(categoriesUrl, {
@@ -317,12 +317,19 @@ function showSuccess(message) {
 async function loadEvents() {
     try {
         console.log('Loading events...');
-        const eventsUrl = getApiUrl('/api/events'); // Используем правильный эндпоинт с префиксом
-        console.log('Fetching events from:', eventsUrl);
-        
-        const response = await fetch(eventsUrl, {
-            method: 'GET',
-            headers: getAuthHeaders()
+        showLoading('eventsContainer');
+
+        const searchParams = new URLSearchParams(window.location.search);
+        const params = {
+            search: searchParams.get('search') || searchInput.value,
+            category: searchParams.get('category') || typeFilter.value,
+        };
+
+        const apiUrl = getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.BASE, params);
+        console.log('Fetching events from:', apiUrl);
+
+        const response = await fetch(apiUrl, {
+            headers: getAuthHeaders(),
         });
 
         console.log('Events response status:', response.status);
@@ -371,6 +378,8 @@ async function loadEvents() {
             `;
             eventsContainer.appendChild(errorDiv);
         }
+    } finally {
+        hideLoading('eventsContainer');
     }
 }
 
