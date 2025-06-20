@@ -71,7 +71,46 @@ async def create_event(
     db.add(db_event)
     await db.commit()
     await db.refresh(db_event)
-    return db_event
+
+    # Собираем словарь для возврата (аналогично get_events)
+    event_dict = {
+        "id": db_event.id,
+        "title": db_event.title,
+        "short_description": db_event.short_description,
+        "full_description": db_event.full_description,
+        "location": db_event.location,
+        "start_date": db_event.start_date.isoformat() if db_event.start_date else None,
+        "end_date": db_event.end_date.isoformat() if db_event.end_date else None,
+        "max_participants": db_event.max_participants,
+        "current_participants": db_event.current_participants,
+        "status": db_event.status.value if db_event.status else None,
+        "event_type": db_event.event_type.value if db_event.event_type else None,
+        "ticket_price": db_event.ticket_price,
+        "image_url": db_event.image_url,
+        "organizer_id": db_event.organizer_id,
+        "organizer": {
+            "id": db_event.organizer.id,
+            "username": db_event.organizer.username,
+            "email": db_event.organizer.email,
+            "full_name": db_event.organizer.full_name
+        } if db_event.organizer else None,
+        "categories": [
+            {
+                "id": cat.id,
+                "name": cat.name,
+                "description": cat.description
+            } for cat in db_event.categories
+        ] if db_event.categories else [],
+        "images": [
+            {
+                "id": img.id,
+                "image_url": img.image_url,
+                "created_at": img.created_at.isoformat() if img.created_at else None
+            } for img in db_event.images
+        ] if db_event.images else [],
+        "participants": []
+    }
+    return event_dict
 
 @router.post("/{event_id}/images")
 async def upload_event_image(
