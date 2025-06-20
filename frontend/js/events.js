@@ -177,7 +177,7 @@ document.getElementById('createEventForm').addEventListener('submit', async func
         let category_ids = [];
         
         // Получаем все категории для поиска ID по названию
-        const categoriesResponse = await fetch('/api/categories', {
+        const categoriesResponse = await fetch('/api/categories/', {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -832,7 +832,7 @@ async function createEvent(eventData) {
         // Устанавливаем статус PENDING для модерации
         eventData.status = 'pending';
         
-        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.CREATE), {
+        const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.CREATE + '/'), {
             method: 'POST',
             headers: {
                 ...getAuthHeaders(),
