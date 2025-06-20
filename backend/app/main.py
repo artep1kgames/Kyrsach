@@ -4,11 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 from pathlib import Path
-from app.routers import auth, events, users, calendar, admin, event_creation, categories
-from app.database import engine, Base
+from routers import auth, events, users, calendar, admin, event_creation, categories
+from database import engine, Base
 from sqladmin import Admin
-from app.admin import UserAdmin, EventAdmin, CategoryAdmin
-from app.models import models
+from admin import UserAdmin, EventAdmin, CategoryAdmin
+from models import models
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from datetime import datetime

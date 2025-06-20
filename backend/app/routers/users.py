@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 from typing import List
-from app.database import get_db
-from app.models import models
-from app.schemas import schemas
-from app.utils.auth import get_current_user, get_password_hash
+from database import get_db
+from models import models
+from schemas import schemas
+from utils.auth import get_current_user, get_password_hash
 from datetime import datetime
 from sqlalchemy.orm import joinedload, selectinload
 
