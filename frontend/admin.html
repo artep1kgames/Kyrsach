@@ -294,7 +294,7 @@
         // Просмотр деталей мероприятия
         async function viewEvent(eventId) {
             try {
-                const response = await fetch(getApiUrl(`/admin/events/${eventId}`), {
+                const response = await fetch(getApiUrl(`/api/admin/events/${eventId}`), {
                     headers: {
                         ...API_CONFIG.HEADERS,
                         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -378,7 +378,7 @@
         // Одобрение мероприятия
         async function approveEvent(eventId) {
             try {
-                const response = await fetch(`${API_URL}/admin/events/${eventId}/approve`, {
+                const response = await fetch(`${API_URL}/api/admin/events/${eventId}/approve`, {
                     method: 'POST',
                     headers: getAuthHeaders()
                 });
@@ -402,7 +402,7 @@
             if (!reason) return;
 
             try {
-                const response = await fetch(`${API_URL}/admin/events/${eventId}/reject?reason=${encodeURIComponent(reason)}`, {
+                const response = await fetch(`${API_URL}/api/admin/events/${eventId}/reject?reason=${encodeURIComponent(reason)}`, {
                     method: 'POST',
                     headers: getAuthHeaders()
                 });
