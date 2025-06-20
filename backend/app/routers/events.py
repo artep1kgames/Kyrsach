@@ -109,11 +109,14 @@ async def create_event(
         "ticket_price": db_event.ticket_price,
         "image_url": db_event.image_url,
         "organizer_id": db_event.organizer_id,
+        "created_at": db_event.created_at.isoformat() if db_event.created_at else None,
+        "rejection_reason": getattr(db_event, "rejection_reason", None),
         "organizer": {
             "id": organizer.id,
             "username": organizer.username,
             "email": organizer.email,
-            "full_name": organizer.full_name
+            "full_name": organizer.full_name,
+            "role": organizer.role.value if hasattr(organizer, 'role') else None
         } if organizer else None,
         "categories": [
             {
@@ -244,11 +247,14 @@ async def get_events(
                 "ticket_price": event.ticket_price,
                 "image_url": event.image_url,
                 "organizer_id": event.organizer_id,
+                "created_at": event.created_at.isoformat() if event.created_at else None,
+                "rejection_reason": getattr(event, "rejection_reason", None),
                 "organizer": {
                     "id": event.organizer.id,
                     "username": event.organizer.username,
                     "email": event.organizer.email,
-                    "full_name": event.organizer.full_name
+                    "full_name": event.organizer.full_name,
+                    "role": event.organizer.role.value if hasattr(event.organizer, 'role') else None
                 } if event.organizer else None,
                 "categories": [
                     {
@@ -353,11 +359,14 @@ async def get_event(
             "ticket_price": event.ticket_price,
             "image_url": event.image_url,
             "organizer_id": event.organizer_id,
+            "created_at": event.created_at.isoformat() if event.created_at else None,
+            "rejection_reason": getattr(event, "rejection_reason", None),
             "organizer": {
                 "id": event.organizer.id,
                 "username": event.organizer.username,
                 "email": event.organizer.email,
-                "full_name": event.organizer.full_name
+                "full_name": event.organizer.full_name,
+                "role": event.organizer.role.value if hasattr(event.organizer, 'role') else None
             } if event.organizer else None,
             "categories": [
                 {
