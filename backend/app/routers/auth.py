@@ -11,7 +11,7 @@ from schemas.schemas import UserCreate, UserResponse, Token
 from utils.auth import verify_password, get_password_hash, create_access_token
 from utils.password import verify_password, get_password_hash
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 # Настройки JWT
 SECRET_KEY = "your-secret-key-here"  # В продакшене использовать безопасный ключ из переменных окружения

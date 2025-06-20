@@ -8,7 +8,6 @@ from models import models
 from schemas import schemas
 
 router = APIRouter(
-    prefix="/events",
     tags=["calendar"]
 )
 

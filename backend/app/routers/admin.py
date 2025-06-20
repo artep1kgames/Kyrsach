@@ -9,7 +9,6 @@ from schemas import schemas
 from utils.auth import get_current_user
 
 router = APIRouter(
-    prefix="/admin",
     tags=["admin"]
 )
 

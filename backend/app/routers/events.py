@@ -15,7 +15,6 @@ from pathlib import Path
 from services.event_service import create_event, get_event, update_event, delete_event
 
 router = APIRouter(
-    prefix="/events",
     tags=["events"]
 )
 

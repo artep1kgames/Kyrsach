@@ -10,7 +10,6 @@ from datetime import datetime
 from sqlalchemy.orm import joinedload, selectinload
 
 router = APIRouter(
-    prefix="/users",
     tags=["users"]
 )
 

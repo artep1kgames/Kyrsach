@@ -100,6 +100,62 @@ async def api_test():
         "timestamp": datetime.now().isoformat()
     }
 
+# Прямые эндпоинты для тестирования (без роутеров)
+@app.get("/api/direct-categories")
+async def direct_categories():
+    try:
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy import select
+        from models.models import Category
+        
+        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+        
+        async with async_session() as session:
+            query = select(Category)
+            result = await session.execute(query)
+            categories = result.scalars().all()
+            
+            categories_list = []
+            for category in categories:
+                categories_list.append({
+                    "id": category.id,
+                    "name": category.name,
+                    "description": category.description
+                })
+            
+            return {"categories": categories_list, "count": len(categories_list)}
+    except Exception as e:
+        return {"error": str(e), "categories": []}
+
+@app.get("/api/direct-events")
+async def direct_events():
+    try:
+        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy import select
+        from models.models import Event
+        
+        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+        
+        async with async_session() as session:
+            query = select(Event)
+            result = await session.execute(query)
+            events = result.scalars().all()
+            
+            events_list = []
+            for event in events:
+                events_list.append({
+                    "id": event.id,
+                    "title": event.title,
+                    "short_description": event.short_description,
+                    "location": event.location,
+                    "start_date": event.start_date.isoformat() if event.start_date else None,
+                    "status": event.status.value if event.status else None
+                })
+            
+            return {"events": events_list, "count": len(events_list)}
+    except Exception as e:
+        return {"error": str(e), "events": []}
+
 # Монтируем статические файлы ПОСЛЕ регистрации роутеров
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
@@ -304,58 +360,30 @@ async def favicon():
         return FileResponse(str(favicon_path))
     return {"message": "Favicon not found"}
 
-# Прямые эндпоинты для тестирования (без роутеров)
-@app.get("/api/direct-categories")
-async def direct_categories():
-    try:
-        from sqlalchemy.orm import sessionmaker
-        from sqlalchemy import select
-        from models.models import Category
-        
-        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-        
-        async with async_session() as session:
-            query = select(Category)
-            result = await session.execute(query)
-            categories = result.scalars().all()
-            
-            categories_list = []
-            for category in categories:
-                categories_list.append({
-                    "id": category.id,
-                    "name": category.name,
-                    "description": category.description
-                })
-            
-            return {"categories": categories_list, "count": len(categories_list)}
-    except Exception as e:
-        return {"error": str(e), "categories": []}
+# Добавляем тестовые эндпоинты для проверки работы роутеров
+@app.get("/api/test-categories")
+async def test_categories_endpoint():
+    """Тестовый эндпоинт для проверки работы категорий"""
+    return {"message": "Categories router is working", "endpoint": "/api/test-categories"}
 
-@app.get("/api/direct-events")
-async def direct_events():
-    try:
-        from sqlalchemy.orm import sessionmaker
-        from sqlalchemy import select
-        from models.models import Event
-        
-        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-        
-        async with async_session() as session:
-            query = select(Event)
-            result = await session.execute(query)
-            events = result.scalars().all()
-            
-            events_list = []
-            for event in events:
-                events_list.append({
-                    "id": event.id,
-                    "title": event.title,
-                    "short_description": event.short_description,
-                    "location": event.location,
-                    "start_date": event.start_date.isoformat() if event.start_date else None,
-                    "status": event.status.value if event.status else None
-                })
-            
-            return {"events": events_list, "count": len(events_list)}
-    except Exception as e:
-        return {"error": str(e), "events": []} 
+@app.get("/api/test-events")
+async def test_events_endpoint():
+    """Тестовый эндпоинт для проверки работы мероприятий"""
+    return {"message": "Events router is working", "endpoint": "/api/test-events"}
+
+@app.get("/api/debug-routers")
+async def debug_routers():
+    """Отладочный эндпоинт для проверки зарегистрированных роутеров"""
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'path'):
+            routes.append({
+                "path": route.path,
+                "name": getattr(route, 'name', 'Unknown'),
+                "methods": getattr(route, 'methods', [])
+            })
+    return {
+        "message": "Registered routes",
+        "total_routes": len(routes),
+        "routes": routes
+    } 
