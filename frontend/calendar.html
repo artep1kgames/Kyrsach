@@ -24,10 +24,14 @@
                     <button class="btn btn-outline login-btn">Войти</button>
                     <button class="btn btn-primary register-btn">Регистрация</button>
                 </div>
-                <div class="user-menu">
-                    <a href="/profile.html">Профиль</a>
-                    <a href="/admin/" class="admin-link" style="display: none;">Админ панель</a>
-                    <a href="#" id="logout-button">Выйти</a>
+                <div class="user-menu" style="display: none;">
+                    <span class="username"></span>
+                    <div class="dropdown-content">
+                        <a href="/profile.html">Профиль</a>
+                        <a href="/admin/" class="admin-link" style="display: none;">Админ панель</a>
+                        <a href="./admin.html" class="admin-link" style="display: none;">Модерация</a>
+                        <a href="#" id="logout-button">Выйти</a>
+                    </div>
                 </div>
             </div>
         </nav>
