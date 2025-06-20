@@ -20,6 +20,7 @@ async def read_categories(
     """Эндпоинт для получения категорий из базы данных"""
     try:
         print("Starting read_categories function")
+        print(f"Parameters: skip={skip}, limit={limit}")
         query = select(models.Category).offset(skip).limit(limit)
         print(f"Query: {query}")
         
