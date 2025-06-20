@@ -41,11 +41,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const startDate = new Date(info.startStr).toISOString();
                 const endDate = new Date(info.endStr).toISOString();
                 
-                const response = await fetch(`${API_CONFIG.BASE_URL}/api/events/?start_date=${startDate}&end_date=${endDate}`, {
-                    headers: {
-                        ...API_CONFIG.HEADERS,
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
+                const params = {
+                    start_date: startDate,
+                    end_date: endDate
+                };
+                
+                const url = getApiUrl(API_CONFIG.ENDPOINTS.EVENTS.BASE, params);
+                console.log('Запрос мероприятий по URL:', url);
+                
+                const response = await fetch(url, {
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) {
@@ -84,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     errorDiv.innerHTML = `
                         <div style="text-align: center; padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; margin: 10px 0;">
                             <p>⚠️ Календарь работает в режиме офлайн (API недоступен)</p>
-                            <p><a href="/debug-api.html" target="_blank">Проверить статус API</a></p>
+                            <p><a href="/test-api.html" target="_blank">Проверить статус API</a></p>
                         </div>
                     `;
                     calendarContainer.appendChild(errorDiv);

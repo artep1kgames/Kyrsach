@@ -12,7 +12,7 @@ from utils.auth import get_current_user
 import shutil
 import os
 from pathlib import Path
-from services.event_service import create_event, get_event, update_event, delete_event
+from services.event_service import create_event as create_event_service, get_event, update_event, delete_event
 
 router = APIRouter(
     tags=["events"]
@@ -109,12 +109,14 @@ async def get_events(
     skip: int = 0,
     limit: int = 100,
     search: Optional[str] = None,
-    start_date: Optional[datetime] = Query(None, description="Start date in ISO format"),
-    end_date: Optional[datetime] = Query(None, description="End date in ISO format"),
+    start_date: Optional[str] = Query(None, description="Start date in ISO format"),
+    end_date: Optional[str] = Query(None, description="End date in ISO format"),
     db: AsyncSession = Depends(get_db)
 ):
     try:
         print("Starting get_events function")
+        print(f"Parameters: skip={skip}, limit={limit}, search={search}, start_date={start_date}, end_date={end_date}")
+        
         query = select(models.Event).options(
             joinedload(models.Event.organizer),
             selectinload(models.Event.images),
@@ -131,11 +133,25 @@ async def get_events(
                 )
             )
         
+        # Преобразуем строки в datetime объекты
+        start_datetime = None
+        end_datetime = None
+        
         if start_date:
-            query = query.where(models.Event.end_date >= start_date)
+            try:
+                start_datetime = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                query = query.where(models.Event.end_date >= start_datetime)
+                print(f"Filtering by start_date: {start_datetime}")
+            except ValueError as e:
+                print(f"Invalid start_date format: {start_date}, error: {e}")
         
         if end_date:
-            query = query.where(models.Event.start_date <= end_date)
+            try:
+                end_datetime = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                query = query.where(models.Event.start_date <= end_datetime)
+                print(f"Filtering by end_date: {end_datetime}")
+            except ValueError as e:
+                print(f"Invalid end_date format: {end_date}, error: {e}")
         
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)

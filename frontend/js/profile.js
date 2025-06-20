@@ -77,7 +77,7 @@ async function loadUpcomingEvents() {
     try {
         const user = await getUser();
         if (!user) return;
-        const response = await fetch(getApiUrl('/api/users/me/upcoming-events'), {
+        const response = await fetch(getApiUrl('/api/me/upcoming-events'), {
             headers: getAuthHeaders()
         });
 
@@ -106,7 +106,7 @@ async function loadPastEvents() {
     try {
         const user = await getUser();
         if (!user) return;
-        const response = await fetch(getApiUrl('/api/users/me/past-events'), {
+        const response = await fetch(getApiUrl('/api/me/past-events'), {
             headers: getAuthHeaders()
         });
 
@@ -142,7 +142,7 @@ async function loadOrganizerEvents() {
     }
 
     try {
-        const response = await fetch(getApiUrl('/api/users/me/events'), {
+        const response = await fetch(getApiUrl('/api/me/events'), {
             headers: getAuthHeaders()
         });
 
