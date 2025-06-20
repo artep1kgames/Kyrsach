@@ -405,7 +405,28 @@ function displayEvents() {
         const formattedDate = startDate.toLocaleString('ru-RU', {
             day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
         });
-        
+
+        // Исправляем вложенность категорий
+        let categories = event.categories;
+        if (Array.isArray(categories) && categories.length === 1 && Array.isArray(categories[0])) {
+            categories = categories[0];
+        }
+        // Формируем теги категорий
+        let categoryTags = '';
+        if (Array.isArray(categories) && categories.length > 0) {
+            categoryTags = categories.map(cat => `<span class="category-tag">${getCategoryDisplay(cat)}</span>`).join('');
+        }
+
+        // Тип оплаты
+        const paymentType = event.ticket_price && event.ticket_price > 0 ? 'Платно' : 'Бесплатно';
+        // Статус модерации
+        const statusDisplay = {
+            'pending': 'На модерации',
+            'approved': 'Одобрено',
+            'rejected': 'Отклонено',
+            'published': 'Опубликовано'
+        }[(event.status || '').toLowerCase()] || event.status;
+
         return `
             <div class="event-card" data-event-id="${event.id}">
                 <div class="event-image">
@@ -418,6 +439,7 @@ function displayEvents() {
                         ${formattedDate}
                     </p>
                     <p class="event-description">${event.short_description}</p>
+                    ${categoryTags ? `<div class="categories-list">${categoryTags}</div>` : ''}
                     <div class="event-footer">
                         <div class="event-meta">
                             <span class="event-location">
@@ -428,7 +450,13 @@ function displayEvents() {
                                 <i class="fas fa-users"></i>
                                 ${event.current_participants || 0}/${event.max_participants}
                             </span>
+                            <span class="event-payment">
+                                <i class="fas ${paymentType === 'Платно' ? 'fa-ticket-alt' : 'fa-gift'}"></i>
+                                ${paymentType}
+                                ${paymentType === 'Платно' && event.ticket_price ? ` (${event.ticket_price} ₽)` : ''}
+                            </span>
                         </div>
+                        <div class="event-status">${statusDisplay}</div>
                     </div>
                     <div class="event-actions">
                         <a href="event.html?id=${event.id}" class="btn btn-primary"><i class="fas fa-eye"></i> Подробнее</a>
