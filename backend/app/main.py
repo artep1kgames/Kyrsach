@@ -8,7 +8,6 @@ from routers import auth, events, users, calendar, admin, event_creation, catego
 from database import engine, Base
 from sqladmin import Admin
 from admin import UserAdmin, EventAdmin, CategoryAdmin
-from auth_admin import AdminAuth
 from models import models
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -169,22 +168,11 @@ app.mount("/frontend/images", StaticFiles(directory=str(FRONTEND_IMAGES_DIR)), n
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
 app.mount("", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 
-# Добавляем обработчик для /events/ маршрута
-@app.get("/events/")
-async def events_page():
-    """Обработчик для страницы событий"""
-    return FileResponse(str(FRONTEND_DIR / "events.html"))
-
-# Настройка админ-панели с аутентификацией
-try:
-    authentication_backend = AdminAuth(secret_key="your-secret-key-here")
-    admin = Admin(app, engine, authentication_backend=authentication_backend)
-    admin.add_view(UserAdmin)
-    admin.add_view(EventAdmin)
-    admin.add_view(CategoryAdmin)
-    print("✓ Admin panel configured successfully")
-except Exception as e:
-    print(f"Warning: Admin panel configuration failed: {e}")
+# Настройка админ-панели
+admin = Admin(app, engine)
+admin.add_view(UserAdmin)
+admin.add_view(EventAdmin)
+admin.add_view(CategoryAdmin)
 
 @app.on_event("startup")
 async def startup():
