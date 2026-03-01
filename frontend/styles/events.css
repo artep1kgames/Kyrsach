@@ -1,11 +1,11 @@
 /* Events Page Styles */
 .events-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
     padding: 4rem 3rem;
     border-radius: 24px;
     margin: 2rem auto 3rem;
-    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 20px 60px rgba(13, 148, 136, 0.3);
     position: relative;
     overflow: hidden;
     max-width: 1600px;
@@ -24,7 +24,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.85) 0%, rgba(15, 118, 110, 0.85) 100%);
     z-index: 1;
 }
 
@@ -99,7 +99,7 @@
     left: 1.2rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #667eea;
+    color: var(--primary-color);
     font-size: 1.1rem;
     z-index: 2;
 }
@@ -195,7 +195,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
     z-index: 1;
 }
 
@@ -241,7 +241,7 @@
 }
 
 .event-card .event-date {
-    color: #667eea;
+    color: var(--primary-color);
     font-size: 0.9rem;
     font-weight: 600;
     margin-bottom: 1rem;
@@ -289,7 +289,7 @@
 }
 
 .event-card .event-participants {
-    color: #667eea;
+    color: var(--primary-color);
     font-size: 0.9rem;
     font-weight: 600;
     display: flex;
@@ -322,7 +322,7 @@
 }
 
 .status-published {
-    background: linear-gradient(45deg, #2196F3, #1976D2);
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
     color: white;
 }
 
@@ -336,19 +336,19 @@
 }
 
 .category-tag {
-    background: linear-gradient(45deg, #667eea, #764ba2);
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
     color: white;
     padding: 0.4rem 0.8rem;
     border-radius: 15px;
     font-size: 0.8rem;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
 }
 
 .category-tag:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
 }
 
 /* Modal Styling */
@@ -393,7 +393,7 @@
     left: 0;
     width: 60px;
     height: 2px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
 }
 
 .close {
@@ -439,9 +439,9 @@
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--primary-color);
     background: white;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .form-group textarea {
@@ -503,7 +503,7 @@
 }
 
 .btn-primary {
-    background-color: #007bff;
+    background-color: var(--primary-color);
     color: white;
 }
 
@@ -699,7 +699,7 @@
 /* Custom Scrollbar */
 .events-grid * {
     scrollbar-width: thin;
-    scrollbar-color: #667eea #f0f0f0;
+    scrollbar-color: var(--primary-color) #f0f0f0;
 }
 
 .events-grid ::-webkit-scrollbar {
@@ -712,7 +712,7 @@
 }
 
 .events-grid ::-webkit-scrollbar-thumb {
-    background: linear-gradient(45deg, #667eea, #764ba2);
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
     border-radius: 4px;
 }
 

@@ -8,12 +8,12 @@
 
 /* Event Header - Modern Hero Section */
 .event-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
     padding: 4rem 3rem;
     border-radius: 24px;
     margin-bottom: 3rem;
-    box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 20px 60px rgba(13, 148, 136, 0.3);
     position: relative;
     overflow: hidden;
     min-height: 450px;
@@ -31,7 +31,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.85) 0%, rgba(118, 75, 162, 0.85) 100%);
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.85) 0%, rgba(15, 118, 110, 0.85) 100%);
     z-index: 1;
 }
 
@@ -102,7 +102,7 @@
 }
 
 .status-published {
-    background: linear-gradient(45deg, #2196F3, #1976D2);
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
     color: white;
 }
 
@@ -162,7 +162,7 @@
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
 }
 
 .info-section:hover {
@@ -184,9 +184,9 @@
 }
 
 .info-section h2 i {
-    color: #667eea;
+    color: var(--primary-color);
     font-size: 1.8rem;
-    background: linear-gradient(45deg, #667eea, #764ba2);
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -199,7 +199,7 @@
     left: 0;
     width: 60px;
     height: 2px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
 }
 
 .info-section p {
@@ -236,7 +236,7 @@
     top: 0;
     bottom: 0;
     width: 4px;
-    background: linear-gradient(180deg, #667eea, #764ba2);
+    background: linear-gradient(180deg, var(--primary-color), var(--primary-dark));
     border-radius: 0 2px 2px 0;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -253,11 +253,11 @@
 }
 
 .info-section li i {
-    color: #667eea;
+    color: var(--primary-color);
     width: 24px;
     text-align: center;
     font-size: 1.2rem;
-    background: linear-gradient(45deg, #667eea, #764ba2);
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -281,21 +281,21 @@
 }
 
 .category-tag {
-    background: linear-gradient(45deg, #667eea, #764ba2);
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
     color: white;
     padding: 0.8rem 1.5rem;
     border-radius: 25px;
     font-size: 0.9rem;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3);
     border: none;
     cursor: default;
 }
 
 .category-tag:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 8px 25px rgba(13, 148, 136, 0.4);
 }
 
 /* Event Actions - Modern Buttons */
@@ -327,13 +327,13 @@
     gap: 8px;
 }
 
-.btn-primary {
-    background-color: #007bff;
+.event-actions .btn-primary {
+    background-color: var(--primary-color);
     color: white;
 }
 
-.btn-primary:hover {
-    background-color: #0056b3;
+.event-actions .btn-primary:hover {
+    background-color: var(--primary-dark);
     transform: translateY(-2px);
 }
 
@@ -515,7 +515,7 @@
 /* Custom Scrollbar */
 .event-details * {
     scrollbar-width: thin;
-    scrollbar-color: #667eea #f0f0f0;
+    scrollbar-color: var(--primary-color) #f0f0f0;
 }
 
 .event-details ::-webkit-scrollbar {
@@ -528,12 +528,12 @@
 }
 
 .event-details ::-webkit-scrollbar-thumb {
-    background: linear-gradient(45deg, #667eea, #764ba2);
+    background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
     border-radius: 4px;
 }
 
 .event-details ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(45deg, #5a6fd8, #6a4190);
+    background: linear-gradient(45deg, var(--primary-dark), #0d5c54);
 }
 
 /* Cancel Participation Button */
